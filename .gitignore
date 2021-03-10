@@ -1,0 +1,17 @@
+gomon_spawn
+.env
+peer*.env
+config/key*
+!config/key.pem.example
+*.log
+.idea
+**/.DS_store
+
+terraform/.terraform/
+terraform/provision.plan
+terraform/terraform.output
+terraform/terraform.tfstate
+terraform/ubuntu_peer1
+terraform/ubuntu_peer1.pub
+terraform/ubuntu_peer2
+terraform/ubuntu_peer2.pub
