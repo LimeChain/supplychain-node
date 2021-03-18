@@ -11,9 +11,14 @@ const (
 	P2PMessageTypeContractAccepted = "contractaccepted"
 	P2PMessageTypePORequest        = "porequest"
 	P2PMessageTypePOAccepted       = "poaccepted"
+
+	P2PMessageTypeSendShipmentRequest  = "sendshipmentrequest"
+	P2PMessageTypeSendShipmentAccepted = "sendshipmentaccepted"
 )
 
 const (
-	DLTMessageTypeContract = "contract"
-	DLTMessageTypePO       = "po"
+	DLTMessageTypeContract         = "contract"
+	DLTMessageTypePO               = "po"
+	DLTMessageTypeSendShipment     = "send-shipment"
+	DLTMessageTypeReceivedShipment = "receive-shipment"
 )

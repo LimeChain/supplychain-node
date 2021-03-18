@@ -16,6 +16,25 @@
         "application/json"
     ],
     "paths": {
+        "/web-platform": {
+            "post": {
+                "summary": "Connect to peer",
+                "tags": ["PeerConnection"],
+                "operationId": "ConnectPeer",
+                "deprecated": false,
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {}
+                    }
+                }
+        },
         "/node": {
             "post": {
                 "summary": "Connect to peer",
