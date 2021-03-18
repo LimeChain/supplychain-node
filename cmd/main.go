@@ -201,9 +201,12 @@ func main() {
 
 	nodeApiService := apiservices.NewNodeService(p2pClient)
 
+	webServiceApiService := apiservices.NewWebService(cs)
+
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.RouteRFP), apiRouter.NewRFPRouter(rfpApiService))
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.RouteProposal), apiRouter.NewProposalsRouter(proposalApiService))
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.RouteContract), apiRouter.NewContractsRouter(contractApiService))
+	a.AddRouter(fmt.Sprintf("/%s", apiRouter.RouteWebService), apiRouter.NewWebServiceRouter(webServiceApiService))
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.RoutePO), apiRouter.NewPurchaseOrdersRouter(purchaseOrderApiService))
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.Swagger), apiRouter.NewSwaggerRouter())
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.Node), apiRouter.NewNodeRouter(nodeApiService))
