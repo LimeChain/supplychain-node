@@ -1,6 +1,8 @@
 package router
 
 import (
+	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/Limechain/HCS-Integration-Node/app/business/apiservices"
@@ -30,26 +32,38 @@ func getWebServiceTest(webService *apiservices.WebPlatformService) func(w http.R
 
 		// log.Println("Response:")
 		// log.Println(res["json"])
-		w.Write([]byte("KAMEN"))
+		w.Write([]byte("PING"))
 	}
 }
 
-func postSubmitShipment(webService *apiservices.WebPlatformService) func(w http.ResponseWriter, r *http.Request) {
+func postCreditShipment(webService *apiservices.WebPlatformService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Submit shipment"))
+		bytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		resp := webService.CreditShipment(bytes)
+		w.Write([]byte(resp))
 	}
 }
 
 func postCreditProduct(webService *apiservices.WebPlatformService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("credit shipment"))
+		bytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		webService.CreditProduct(bytes)
+		w.Write([]byte("Done"))
 	}
 }
 
 func NewWebPlatformRouter(webService *apiservices.WebPlatformService) http.Handler {
 	r := chi.NewRouter()
 	r.Get("/", getWebServiceTest(webService))
-	r.Post("/submit-shipment", postSubmitShipment(webService))
+	r.Post("/credit-shipment", postCreditShipment(webService))
 	r.Post("/credit-product", postCreditProduct(webService))
 	return r
 }
