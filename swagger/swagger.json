@@ -16,7 +16,7 @@
         "application/json"
     ],
     "paths": {
-        "/web-service": {
+        "/web-platform": {
             "post": {
                 "summary": "Connect to peer",
                 "tags": ["PeerConnection"],
@@ -28,24 +28,13 @@
                 "consumes": [
                     "application/json"
                 ],
-                "parameters": [
-                    {
-                        "name": "Body",
-                        "in": "body",
-                        "required": true,
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/ConnectPeerRequest"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "",
                         "headers": {}
                     }
                 }
-        }
+        },
         "/node": {
             "post": {
                 "summary": "Connect to peer",
