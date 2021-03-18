@@ -19,6 +19,8 @@ import (
 	poRepository "github.com/Limechain/HCS-Integration-Node/app/domain/purchase-order/repository"
 	poService "github.com/Limechain/HCS-Integration-Node/app/domain/purchase-order/service"
 	rfpRepository "github.com/Limechain/HCS-Integration-Node/app/domain/rfp/repository"
+	sendShipmentRepository "github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/repository"
+	sendShipmentService "github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/service"
 	"github.com/Limechain/HCS-Integration-Node/app/interfaces/api"
 	apiRouter "github.com/Limechain/HCS-Integration-Node/app/interfaces/api/router"
 	"github.com/Limechain/HCS-Integration-Node/app/interfaces/common"
@@ -29,6 +31,7 @@ import (
 	proposalMongo "github.com/Limechain/HCS-Integration-Node/app/persistance/mongodb/proposal"
 	poMongo "github.com/Limechain/HCS-Integration-Node/app/persistance/mongodb/purchase-order"
 	rfpMongo "github.com/Limechain/HCS-Integration-Node/app/persistance/mongodb/rfp"
+	sendShipmentMongo "github.com/Limechain/HCS-Integration-Node/app/persistance/mongodb/send-shipment"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 )
@@ -41,7 +44,9 @@ func setupP2PClient(
 	contractRepo contractRepository.ContractsRepository,
 	cs *contractService.ContractService,
 	por poRepository.PurchaseOrdersRepository,
-	pos *poService.PurchaseOrderService) common.Messenger {
+	pos *poService.PurchaseOrderService,
+	sendShipmentRepo sendShipmentRepository.SendShipmentRepository,
+	sendShipmentService *sendShipmentService.SendShipmentService) common.Messenger {
 
 	listenPort := os.Getenv("P2P_PORT")
 	listenIp := os.Getenv("P2P_IP")
@@ -57,6 +62,9 @@ func setupP2PClient(
 	poRequestHandler := handler.NewPORequestHandler(por, pos, p2pClient)
 	poAcceptedHandler := handler.NewPOAcceptedHandler(por, pos, hcsClient)
 
+	sendShipmentRequestHandler := handler.NewSendShipmentRequestHandler(sendShipmentRepo, sendShipmentService, p2pClient)
+	sendShipmentAcceptedHandler := handler.NewSendShipmentAcceptedHandler(sendShipmentRepo, sendShipmentService, hcsClient)
+
 	var parser json.JSONBusinessMesssageParser
 
 	r := router.NewBusinessMessageRouter(&parser)
@@ -67,6 +75,9 @@ func setupP2PClient(
 	r.AddHandler(messages.P2PMessageTypeContractAccepted, contractAcceptedHandler)
 	r.AddHandler(messages.P2PMessageTypePORequest, poRequestHandler)
 	r.AddHandler(messages.P2PMessageTypePOAccepted, poAcceptedHandler)
+
+	r.AddHandler(messages.P2PMessageTypeSendShipmentRequest, sendShipmentRequestHandler)
+	r.AddHandler(messages.P2PMessageTypeSendShipmentAccepted, sendShipmentAcceptedHandler)
 
 	p2pChannel := make(chan *common.Message)
 
@@ -82,7 +93,9 @@ func setupDLTClient(
 	contractRepo contractRepository.ContractsRepository,
 	cs *contractService.ContractService,
 	por poRepository.PurchaseOrdersRepository,
-	pos *poService.PurchaseOrderService) common.DLTMessenger {
+	pos *poService.PurchaseOrderService,
+	sendShipmentRepo sendShipmentRepository.SendShipmentRepository,
+	sendShipmentService *sendShipmentService.SendShipmentService) common.DLTMessenger {
 
 	shouldConnectToMainnet := (os.Getenv("HCS_MAINNET") == "true")
 	hcsClientID := os.Getenv("HCS_CLIENT_ID")
@@ -95,10 +108,11 @@ func setupDLTClient(
 
 	contractHandler := handler.NewDLTContractHandler(contractRepo, cs)
 	poHandler := handler.NewDLTPOHandler(por, pos)
-	// TODO add handlers
+	sendShipmentHandler := handler.NewDLTSendShipmentHandler(sendShipmentRepo, sendShipmentService)
 
 	r.AddHandler(messages.DLTMessageTypeContract, contractHandler)
 	r.AddHandler(messages.DLTMessageTypePO, poHandler)
+	r.AddHandler(messages.DLTMessageTypeSendShipment, sendShipmentHandler)
 
 	ch := make(chan *common.Message)
 
@@ -158,16 +172,18 @@ func main() {
 	proposalRepo := proposalMongo.NewProposalRepository(db)
 	contractRepo := contractMongo.NewContractRepository(db)
 	por := poMongo.NewPurchaseOrderRepository(db)
+	sendShipmentRepo := sendShipmentMongo.NewSendShipmentRepository(db)
 
 	ps := proposalService.New()
 	cs := contractService.New(prvKey, proposalRepo, ps, peerPubKey)
 	pos := poService.New(prvKey, contractRepo, cs, peerPubKey)
+	sss := sendShipmentService.New(prvKey, peerPubKey)
 
-	hcsClient := setupDLTClient(prvKey, contractRepo, cs, por, pos)
+	hcsClient := setupDLTClient(prvKey, contractRepo, cs, por, pos, sendShipmentRepo, sss)
 
 	defer hcsClient.Close()
 
-	p2pClient := setupP2PClient(prvKey, hcsClient, rfpRepo, proposalRepo, contractRepo, cs, por, pos)
+	p2pClient := setupP2PClient(prvKey, hcsClient, rfpRepo, proposalRepo, contractRepo, cs, por, pos, sendShipmentRepo, sss)
 
 	defer p2pClient.Close()
 
@@ -181,6 +197,8 @@ func main() {
 	contractApiService := apiservices.NewContractService(contractRepo, cs, p2pClient)
 	purchaseOrderApiService := apiservices.NewPurchaseOrderService(por, pos, p2pClient)
 
+	sendShipmentApiService := apiservices.NewSendShipmentService(sendShipmentRepo, sss, p2pClient)
+
 	nodeApiService := apiservices.NewNodeService(p2pClient)
 
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.RouteRFP), apiRouter.NewRFPRouter(rfpApiService))
@@ -189,6 +207,7 @@ func main() {
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.RoutePO), apiRouter.NewPurchaseOrdersRouter(purchaseOrderApiService))
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.Swagger), apiRouter.NewSwaggerRouter())
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.Node), apiRouter.NewNodeRouter(nodeApiService))
+	a.AddRouter(fmt.Sprintf("/%s", apiRouter.SendShipment), apiRouter.NewSendShipmentRouter(sendShipmentApiService))
 
 	if err := a.Start(apiPort); err != nil {
 		panic(err)

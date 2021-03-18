@@ -7,4 +7,5 @@ const (
 	RoutePO       = "po"
 	Swagger       = "swagger"
 	Node          = "node"
+	SendShipment  = "send-shipment"
 )
