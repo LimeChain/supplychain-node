@@ -15,3 +15,4 @@ terraform/ubuntu_peer1
 terraform/ubuntu_peer1.pub
 terraform/ubuntu_peer2
 terraform/ubuntu_peer2.pub
+.DS_Store
