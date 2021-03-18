@@ -2,8 +2,8 @@ FROM golang:1.14.2
 
 WORKDIR /usr/src/app
 
-COPY ./* ./
+COPY ./ ./
 
 RUN chmod +x ./install_prerequisites.sh&& /bin/bash ./install_prerequisites.sh
 
-CMD ["sleep", "infinity"]
+CMD ["/bin/bash", "./start.sh"]
