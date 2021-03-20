@@ -2,6 +2,8 @@ package router
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/Limechain/HCS-Integration-Node/app/business/apiservices"
 	"github.com/Limechain/HCS-Integration-Node/app/domain/rfp/model"
 	"github.com/Limechain/HCS-Integration-Node/app/interfaces/api"
@@ -9,63 +11,58 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 type CreateRFPRequest struct {
-	RFPId      string        `json:"rfpId" bson:"rfpId"`
-	SupplierId string        `json:"supplierId" bson:"supplierId"`
-	BuyerId    string        `json:"buyerId" bson:"buyerId"`
-	Items      []requestItem `json:"items" bson:"items"`
+	Type        int        `json:"type" bson:"type"`
+	Obj         productObj `json:"obj" bson:"obj"`
+	Destination string     `json:"destination" bson:"destination"`
 }
 
-type requestItem struct {
-	OrderItemId int     `json:"orderItemId" bson:"orderItemId"`
-	SKUBuyer    string  `json:"skuBuyer" bson:"skuBuyer"`
-	SKUSupplier string  `json:"skuSupplier" bson:"skuSupplier"`
-	Quantity    int     `json:"quantity" bson:"quantity"`
-	Unit        string  `json:"unit" bson:"unit"`
-	SinglePrice float32 `json:"singlePrice" bson:"singlePrice"`
-	TotalValue  float32 `json:"totalValue" bson:"totalValue"`
-	Currency    string  `json:"currency" bson:"currency"`
+type productObj struct {
+	ProductModel productModel `json:"productModel" bson:"productModel"`
+}
+
+type productModel struct {
+	ProductId          int    `json:"productId" bson:"productId"`
+	ProductName        string `json:"productName" bson:"productName"`
+	ProductUnit        int    `json:"productUnit" bson:"productUnit"`
+	ProductDescription string `json:"productDescription" bson:"productDescription"`
+	ProductDeleted     int    `json:"productDeleted" bson:"productDeleted"`
 }
 
 type storedRFPsResponse struct {
 	api.IntegrationNodeAPIResponse
-	RFPs []*model.RFP `json:"rfps"`
+	RFPs []*model.Product `json:"rfps"`
 }
 
 type storedRFPResponse struct {
 	api.IntegrationNodeAPIResponse
-	RFP *model.RFP `json:"rfp"`
+	RFP *model.Product `json:"rfp"`
 }
 
 type createRFPResponse struct {
 	api.IntegrationNodeAPIResponse
-	RFPId string `json:"rfpId,omitempty"`
+	RFPId int `json:"rfpId,omitempty"`
 }
 
-func (rfpRequestModel *CreateRFPRequest) toRFP() *model.RFP {
-	items := make([]model.Item, len(rfpRequestModel.Items))
-
-	for i, item := range rfpRequestModel.Items {
-		items[i] = model.Item{
-			OrderItemId: item.OrderItemId,
-			SKUBuyer:    item.SKUBuyer,
-			SKUSupplier: item.SKUSupplier,
-			Quantity:    item.Quantity,
-			Unit:        item.Unit,
-			SinglePrice: item.SinglePrice,
-			TotalValue:  item.TotalValue,
-			Currency:    item.Currency,
-		}
+func (rfpRequestModel *CreateRFPRequest) toRFP() *model.Product {
+	productModel := model.ProductModel{
+		ProductId:          rfpRequestModel.Obj.ProductModel.ProductId,
+		ProductName:        rfpRequestModel.Obj.ProductModel.ProductName,
+		ProductUnit:        rfpRequestModel.Obj.ProductModel.ProductUnit,
+		ProductDescription: rfpRequestModel.Obj.ProductModel.ProductDescription,
+		ProductDeleted:     rfpRequestModel.Obj.ProductModel.ProductDeleted,
 	}
 
-	return &model.RFP{
-		RFPId:      rfpRequestModel.RFPId,
-		SupplierId: rfpRequestModel.SupplierId,
-		BuyerId:    rfpRequestModel.BuyerId,
-		Items:      items,
+	productObj := model.ProductObj{
+		ProductModel: productModel,
+	}
+
+	return &model.Product{
+		Type:        rfpRequestModel.Type,
+		Obj:         productObj,
+		Destination: rfpRequestModel.Destination,
 	}
 }
 
@@ -101,12 +98,12 @@ func createRFP(rfpService *apiservices.RFPService) func(w http.ResponseWriter, r
 			var mr *parser.MalformedRequest
 			if errors.As(err, &mr) {
 				log.Println(mr.Msg)
-				render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: mr.Msg}, ""})
+				render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: mr.Msg}, 0})
 				return
 			}
 
 			log.Errorln(err.Error())
-			render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, ""})
+			render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, 0})
 			return
 		}
 
@@ -116,7 +113,7 @@ func createRFP(rfpService *apiservices.RFPService) func(w http.ResponseWriter, r
 
 		storedRFPId, err := rfpService.CreateRFP(rfp)
 		if err != nil {
-			render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, ""})
+			render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, 0})
 			return
 		}
 

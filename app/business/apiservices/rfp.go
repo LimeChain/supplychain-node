@@ -15,26 +15,26 @@ type RFPService struct {
 	p2pClient common.Messenger
 }
 
-func (s *RFPService) GetAllRFPs() ([]*rfpModel.RFP, error) {
+func (s *RFPService) GetAllRFPs() ([]*rfpModel.Product, error) {
 	return s.repo.GetAll()
 }
 
-func (s *RFPService) GetRFP(rfpId string) (*rfpModel.RFP, error) {
+func (s *RFPService) GetRFP(rfpId string) (*rfpModel.Product, error) {
 	return s.repo.GetByID(rfpId)
 }
 
-func (s *RFPService) CreateRFP(rfp *rfpModel.RFP) (id string, err error) {
+func (s *RFPService) CreateRFP(rfp *rfpModel.Product) (id int, err error) {
 	rfpId, err := s.repo.Save(rfp)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	p2pMsg := messages.CreateRFPMessage(rfp)
 	p2pBytes, err := json.Marshal(p2pMsg)
 	if err != nil {
 		// TODO delete from db if cannot marshal
-		return "", err
+		return 0, err
 	}
-	s.p2pClient.Send(&common.Message{Ctx: context.TODO(), Msg: p2pBytes}, rfp.SupplierId)
+	s.p2pClient.Send(&common.Message{Ctx: context.TODO(), Msg: p2pBytes}, rfp.Destination)
 	return rfpId, nil
 }
 

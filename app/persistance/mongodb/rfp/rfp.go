@@ -2,8 +2,8 @@ package rfp
 
 import (
 	"context"
+
 	"github.com/Limechain/HCS-Integration-Node/app/domain/rfp/model"
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -12,19 +12,19 @@ type RFPRepository struct {
 	db *mongo.Database
 }
 
-func (r *RFPRepository) GetAll() ([]*model.RFP, error) {
-	collection := r.db.Collection("rfps")
+func (r *RFPRepository) GetAll() ([]*model.Product, error) {
+	collection := r.db.Collection("products")
 	cur, err := collection.Find(context.TODO(), bson.D{{}})
 	if err != nil {
 		return nil, err
 	}
 
-	results := make([]*model.RFP, 0)
+	results := make([]*model.Product, 0)
 
 	for cur.Next(context.TODO()) {
 
 		// create a value into which the single document can be decoded
-		var elem model.RFP
+		var elem model.Product
 		err := cur.Decode(&elem)
 		if err != nil {
 			return nil, err
@@ -36,9 +36,9 @@ func (r *RFPRepository) GetAll() ([]*model.RFP, error) {
 	return results, nil
 }
 
-func (r *RFPRepository) GetByID(id string) (*model.RFP, error) {
+func (r *RFPRepository) GetByID(id string) (*model.Product, error) {
 
-	var result model.RFP
+	var result model.Product
 	collection := r.db.Collection("rfps")
 	if err := collection.FindOne(context.TODO(), bson.M{"rfpId": id}).Decode(&result); err != nil {
 		return nil, err
@@ -46,17 +46,17 @@ func (r *RFPRepository) GetByID(id string) (*model.RFP, error) {
 
 	return &result, nil
 }
-func (r *RFPRepository) Save(rfp *model.RFP) (string, error) {
-	collection := r.db.Collection("rfps")
-	if len(rfp.RFPId) == 0 {
-		rfp.RFPId = uuid.New().String()
+func (r *RFPRepository) Save(rfp *model.Product) (int, error) {
+	collection := r.db.Collection("products")
+	if rfp.Obj.ProductModel.ProductId == 0 {
+		rfp.Obj.ProductModel.ProductId = 1
 	}
 	_, err := collection.InsertOne(context.TODO(), rfp)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
-	return rfp.RFPId, nil
+	return rfp.Obj.ProductModel.ProductId, nil
 }
 
 func NewRFPRepository(db *mongo.Database) *RFPRepository {

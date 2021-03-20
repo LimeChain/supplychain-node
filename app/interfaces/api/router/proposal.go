@@ -2,6 +2,8 @@ package router
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/Limechain/HCS-Integration-Node/app/business/apiservices"
 	proposalModel "github.com/Limechain/HCS-Integration-Node/app/domain/proposal/model"
 	"github.com/Limechain/HCS-Integration-Node/app/interfaces/api"
@@ -9,7 +11,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 type CreateProposal struct {
@@ -110,12 +111,12 @@ func createProposal(proposalService *apiservices.ProposalService) func(w http.Re
 			var mr *parser.MalformedRequest
 			if errors.As(err, &mr) {
 				log.Println(mr.Msg)
-				render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: mr.Msg}, ""})
+				render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: mr.Msg}, 0})
 				return
 			}
 
 			log.Errorln(err.Error())
-			render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, ""})
+			render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, 0})
 			return
 		}
 
@@ -123,13 +124,13 @@ func createProposal(proposalService *apiservices.ProposalService) func(w http.Re
 
 		proposal := proposalRequest.toProposal()
 
-		storedRFPId, err := proposalService.CreateProposal(proposal)
+		_, err = proposalService.CreateProposal(proposal)
 		if err != nil {
-			render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, ""})
+			render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, 0})
 			return
 		}
 
-		render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: true, Error: ""}, storedRFPId})
+		render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: true, Error: ""}, 0})
 	}
 }
 

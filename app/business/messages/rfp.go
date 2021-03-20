@@ -6,9 +6,9 @@ import (
 
 type RFPMessage struct {
 	BusinessMessage
-	Data model.RFP `json:"data"`
+	Data model.Product `json:"data"`
 }
 
-func CreateRFPMessage(rfp *model.RFP) *RFPMessage {
+func CreateRFPMessage(rfp *model.Product) *RFPMessage {
 	return &RFPMessage{BusinessMessage: BusinessMessage{Type: P2PMessageTypeRFP}, Data: *rfp}
 }
