@@ -93,7 +93,7 @@ func sendSendShipment(sendShipmentService *apiservices.SendShipmentService) func
 
 		shipmentId, sendShipmentHash, sendShipmentSignature, err := sendShipmentService.SaveAndSendSendShipment(unsignedSendShipment)
 		if err != nil {
-			render.JSON(w, r, sendContractResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, "", "", ""})
+			render.JSON(w, r, sendSendShipmentResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, "", "", ""})
 			return
 		}
 

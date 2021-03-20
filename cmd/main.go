@@ -12,13 +12,7 @@ import (
 	"github.com/Limechain/HCS-Integration-Node/app/business/handler/parser/json"
 	"github.com/Limechain/HCS-Integration-Node/app/business/handler/router"
 	"github.com/Limechain/HCS-Integration-Node/app/business/messages"
-	contractRepository "github.com/Limechain/HCS-Integration-Node/app/domain/contract/repository"
-	contractService "github.com/Limechain/HCS-Integration-Node/app/domain/contract/service"
 	productRepository "github.com/Limechain/HCS-Integration-Node/app/domain/product/repository"
-	proposalRepository "github.com/Limechain/HCS-Integration-Node/app/domain/proposal/repository"
-	proposalService "github.com/Limechain/HCS-Integration-Node/app/domain/proposal/service"
-	poRepository "github.com/Limechain/HCS-Integration-Node/app/domain/purchase-order/repository"
-	poService "github.com/Limechain/HCS-Integration-Node/app/domain/purchase-order/service"
 	sendShipmentRepository "github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/repository"
 	sendShipmentService "github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/service"
 	"github.com/Limechain/HCS-Integration-Node/app/interfaces/api"
@@ -27,10 +21,7 @@ import (
 	"github.com/Limechain/HCS-Integration-Node/app/interfaces/common/queue"
 	"github.com/Limechain/HCS-Integration-Node/app/interfaces/dlt/hcs"
 	"github.com/Limechain/HCS-Integration-Node/app/interfaces/p2p/messaging/libp2p"
-	contractMongo "github.com/Limechain/HCS-Integration-Node/app/persistance/mongodb/contract"
 	productMongo "github.com/Limechain/HCS-Integration-Node/app/persistance/mongodb/product"
-	proposalMongo "github.com/Limechain/HCS-Integration-Node/app/persistance/mongodb/proposal"
-	poMongo "github.com/Limechain/HCS-Integration-Node/app/persistance/mongodb/purchase-order"
 	sendShipmentMongo "github.com/Limechain/HCS-Integration-Node/app/persistance/mongodb/send-shipment"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
@@ -40,11 +31,6 @@ func setupP2PClient(
 	prvKey ed25519.PrivateKey,
 	hcsClient common.DLTMessenger,
 	productRepo productRepository.ProductRepository,
-	proposalRepo proposalRepository.ProposalRepository,
-	contractRepo contractRepository.ContractsRepository,
-	cs *contractService.ContractService,
-	por poRepository.PurchaseOrdersRepository,
-	pos *poService.PurchaseOrderService,
 	sendShipmentRepo sendShipmentRepository.SendShipmentRepository,
 	sendShipmentService *sendShipmentService.SendShipmentService) common.Messenger {
 
@@ -56,12 +42,6 @@ func setupP2PClient(
 	// TODO get some env variables
 	// TODO add more handlers
 	productHandler := handler.NewProductHandler(productRepo)
-	proposalHandler := handler.NewProposalHandler(proposalRepo)
-	contractRequestHandler := handler.NewContractRequestHandler(contractRepo, cs, p2pClient)
-	contractAcceptedHandler := handler.NewContractAcceptedHandler(contractRepo, cs, hcsClient)
-	poRequestHandler := handler.NewPORequestHandler(por, pos, p2pClient)
-	poAcceptedHandler := handler.NewPOAcceptedHandler(por, pos, hcsClient)
-
 	sendShipmentRequestHandler := handler.NewSendShipmentRequestHandler(sendShipmentRepo, sendShipmentService, p2pClient)
 	sendShipmentAcceptedHandler := handler.NewSendShipmentAcceptedHandler(sendShipmentRepo, sendShipmentService, hcsClient)
 
@@ -70,12 +50,6 @@ func setupP2PClient(
 	r := router.NewBusinessMessageRouter(&parser)
 
 	r.AddHandler(messages.P2PMessageTypeProduct, productHandler)
-	r.AddHandler(messages.P2PMessageTypeProposal, proposalHandler)
-	r.AddHandler(messages.P2PMessageTypeContractRequest, contractRequestHandler)
-	r.AddHandler(messages.P2PMessageTypeContractAccepted, contractAcceptedHandler)
-	r.AddHandler(messages.P2PMessageTypePORequest, poRequestHandler)
-	r.AddHandler(messages.P2PMessageTypePOAccepted, poAcceptedHandler)
-
 	r.AddHandler(messages.P2PMessageTypeSendShipmentRequest, sendShipmentRequestHandler)
 	r.AddHandler(messages.P2PMessageTypeSendShipmentAccepted, sendShipmentAcceptedHandler)
 
@@ -90,10 +64,6 @@ func setupP2PClient(
 
 func setupDLTClient(
 	prvKey ed25519.PrivateKey,
-	contractRepo contractRepository.ContractsRepository,
-	cs *contractService.ContractService,
-	por poRepository.PurchaseOrdersRepository,
-	pos *poService.PurchaseOrderService,
 	sendShipmentRepo sendShipmentRepository.SendShipmentRepository,
 	sendShipmentService *sendShipmentService.SendShipmentService) common.DLTMessenger {
 
@@ -106,12 +76,8 @@ func setupDLTClient(
 
 	r := router.NewBusinessMessageRouter(&parser)
 
-	contractHandler := handler.NewDLTContractHandler(contractRepo, cs)
-	poHandler := handler.NewDLTPOHandler(por, pos)
 	sendShipmentHandler := handler.NewDLTSendShipmentHandler(sendShipmentRepo, sendShipmentService)
 
-	r.AddHandler(messages.DLTMessageTypeContract, contractHandler)
-	r.AddHandler(messages.DLTMessageTypePO, poHandler)
 	r.AddHandler(messages.DLTMessageTypeSendShipment, sendShipmentHandler)
 
 	ch := make(chan *common.Message)
@@ -169,21 +135,15 @@ func main() {
 	defer client.Disconnect(context.Background())
 
 	productRepo := productMongo.NewProductRepository(db)
-	proposalRepo := proposalMongo.NewProposalRepository(db)
-	contractRepo := contractMongo.NewContractRepository(db)
-	por := poMongo.NewPurchaseOrderRepository(db)
 	sendShipmentRepo := sendShipmentMongo.NewSendShipmentRepository(db)
 
-	ps := proposalService.New()
-	cs := contractService.New(prvKey, proposalRepo, ps, peerPubKey)
-	pos := poService.New(prvKey, contractRepo, cs, peerPubKey)
 	sss := sendShipmentService.New(prvKey, peerPubKey)
 
-	hcsClient := setupDLTClient(prvKey, contractRepo, cs, por, pos, sendShipmentRepo, sss)
+	hcsClient := setupDLTClient(prvKey, sendShipmentRepo, sss)
 
 	defer hcsClient.Close()
 
-	p2pClient := setupP2PClient(prvKey, hcsClient, productRepo, proposalRepo, contractRepo, cs, por, pos, sendShipmentRepo, sss)
+	p2pClient := setupP2PClient(prvKey, hcsClient, productRepo, sendShipmentRepo, sss)
 
 	defer p2pClient.Close()
 
@@ -192,10 +152,6 @@ func main() {
 	a := api.NewIntegrationNodeAPI()
 
 	productApiService := apiservices.NewProductService(productRepo, p2pClient)
-	proposalApiService := apiservices.NewProposalService(proposalRepo, p2pClient)
-
-	contractApiService := apiservices.NewContractService(contractRepo, cs, p2pClient)
-	purchaseOrderApiService := apiservices.NewPurchaseOrderService(por, pos, p2pClient)
 
 	sendShipmentApiService := apiservices.NewSendShipmentService(sendShipmentRepo, sss, p2pClient)
 
@@ -204,10 +160,7 @@ func main() {
 	webPlatformApiService := apiservices.NewWebPlatformService()
 
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.RouteProduct), apiRouter.NewProductRouter(productApiService))
-	a.AddRouter(fmt.Sprintf("/%s", apiRouter.RouteProposal), apiRouter.NewProposalsRouter(proposalApiService))
-	a.AddRouter(fmt.Sprintf("/%s", apiRouter.RouteContract), apiRouter.NewContractsRouter(contractApiService))
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.RouteWebPlatform), apiRouter.NewWebPlatformRouter(webPlatformApiService))
-	a.AddRouter(fmt.Sprintf("/%s", apiRouter.RoutePO), apiRouter.NewPurchaseOrdersRouter(purchaseOrderApiService))
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.Swagger), apiRouter.NewSwaggerRouter())
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.Node), apiRouter.NewNodeRouter(nodeApiService))
 	a.AddRouter(fmt.Sprintf("/%s", apiRouter.SendShipment), apiRouter.NewSendShipmentRouter(sendShipmentApiService))
