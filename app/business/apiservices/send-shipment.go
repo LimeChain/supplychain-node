@@ -21,29 +21,29 @@ func (ss *SendShipmentService) GetAllSentShipments() ([]*sendShipmentModel.SendS
 	return ss.ssr.GetAll()
 }
 
-func (ss *SendShipmentService) GetSentShipment(shipmentId string) (*sendShipmentModel.SendShipment, error) {
+func (ss *SendShipmentService) GetSentShipment(shipmentId int) (*sendShipmentModel.SendShipment, error) {
 	return ss.ssr.GetByID(shipmentId)
 }
 
-func (ss *SendShipmentService) SaveAndSendSendShipment(unsignedSendShipment *sendShipmentModel.UnsignedSendShipment) (sendShipmentId, sendShipmentHash, sendShipmentSignature string, err error) {
+func (ss *SendShipmentService) SaveAndSendSendShipment(unsignedSendShipment *sendShipmentModel.UnsignedSendShipment) (sendShipmentId int, sendShipmentHash, sendShipmentSignature string, err error) {
 	sendShipmentHash, err = ss.sss.Hash(unsignedSendShipment)
 	if err != nil {
-		return "", "", "", err
+		return 0, "", "", err
 	}
 	sendShipmentSignature, err = ss.sss.Sign(unsignedSendShipment)
 	if err != nil {
-		return "", "", "", err
+		return 0, "", "", err
 	}
 	signedSendShipment := &sendShipmentModel.SendShipment{UnsignedSendShipment: *unsignedSendShipment, BuyerSignature: sendShipmentSignature, DLTAnchored: false}
 	sendShipmentId, err = ss.ssr.Save(signedSendShipment)
 	if err != nil {
-		return "", "", "", err
+		return 0, "", "", err
 	}
 	p2pMsg := messages.CreateSendShipmentRequestMessage(signedSendShipment)
 	p2pBytes, err := json.Marshal(p2pMsg)
 	if err != nil {
 		// TODO delete from db if cannot marshal
-		return "", "", "", err
+		return 0, "", "", err
 	}
 	ss.p2pClient.Send(&common.Message{Ctx: context.TODO(), Msg: p2pBytes}, signedSendShipment.Destination)
 	return sendShipmentId, sendShipmentHash, sendShipmentSignature, nil

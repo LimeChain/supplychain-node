@@ -17,11 +17,11 @@ type SendShipmentService struct {
 
 func (ss *SendShipmentService) Hash(unsignedSendShipment *model.UnsignedSendShipment) (string, error) {
 	var sb strings.Builder
-	sb.WriteString(unsignedSendShipment.ShipmentId)
+	sb.WriteString(string(unsignedSendShipment.Obj.ShipmentModel.ShipmentId))
 	sb.WriteRune(',')
-	sb.WriteString(unsignedSendShipment.SupplierId)
+	sb.WriteString(unsignedSendShipment.Obj.ShipmentModel.ShipmentConsignmentNumber)
 	sb.WriteRune(',')
-	sb.WriteString(unsignedSendShipment.BuyerId)
+	sb.WriteString(string(unsignedSendShipment.Obj.ShipmentModel.ShipmentStatus))
 
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(sb.String()))), nil
 

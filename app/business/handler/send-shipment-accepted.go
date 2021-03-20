@@ -38,7 +38,7 @@ func (h *SendShipmentAcceptedHandler) Handle(msg *common.Message) error {
 		return errors.New("The sent shipment was not signed by the supplir")
 	}
 
-	savedSendShipment, err := h.sendShipmentRepo.GetByID(sendShipment.ShipmentId)
+	savedSendShipment, err := h.sendShipmentRepo.GetByID(sendShipment.Obj.ShipmentModel.ShipmentId)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (h *SendShipmentAcceptedHandler) Handle(msg *common.Message) error {
 		return errors.New("Invalid signature by the supplier")
 	}
 
-	dltMessage := messages.CreateDLTSendShipmentMessage(sendShipment.ShipmentId, sendShipmentHash, sendShipment.BuyerSignature, sendShipment.SupplierSignature)
+	dltMessage := messages.CreateDLTSendShipmentMessage(sendShipment.Obj.ShipmentModel.ShipmentId, sendShipmentHash, sendShipment.BuyerSignature, sendShipment.SupplierSignature)
 
 	dltBytes, err := json.Marshal(dltMessage)
 	if err != nil {
@@ -79,7 +79,7 @@ func (h *SendShipmentAcceptedHandler) Handle(msg *common.Message) error {
 		return err
 	}
 
-	log.Infof("Verified and saved accepted sent shipment with id: %s\n", sendShipment.ShipmentId)
+	log.Infof("Verified and saved accepted sent shipment with id: %s\n", sendShipment.Obj.ShipmentModel.ShipmentId)
 	return nil
 }
 

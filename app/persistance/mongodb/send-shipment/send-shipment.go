@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/model"
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -38,36 +37,36 @@ func (r *SendShipmentRepository) GetAll() ([]*model.SendShipment, error) {
 	return results, nil
 }
 
-func (r *SendShipmentRepository) GetByID(id string) (*model.SendShipment, error) {
+func (r *SendShipmentRepository) GetByID(id int) (*model.SendShipment, error) {
 
 	var result model.SendShipment
 	collection := r.db.Collection("sent-shipments")
-	if err := collection.FindOne(context.TODO(), bson.M{"unsignedSendShipment.shipmentId": id}).Decode(&result); err != nil {
+	if err := collection.FindOne(context.TODO(), bson.M{"unsignedSendShipment.obj.shipmentModel.shipmentId": id}).Decode(&result); err != nil {
 		return nil, err
 	}
 
 	return &result, nil
 }
 
-func (r *SendShipmentRepository) Save(sendShipment *model.SendShipment) (string, error) {
+func (r *SendShipmentRepository) Save(sendShipment *model.SendShipment) (int, error) {
 	collection := r.db.Collection("sent-shipments")
-	if len(sendShipment.ShipmentId) == 0 {
-		sendShipment.ShipmentId = uuid.New().String()
+	if sendShipment.Obj.ShipmentModel.ShipmentId == 0 {
+		sendShipment.Obj.ShipmentModel.ShipmentId = 1
 	}
 	_, err := collection.InsertOne(context.TODO(), sendShipment)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
-	return sendShipment.ShipmentId, nil
+	return sendShipment.Obj.ShipmentModel.ShipmentId, nil
 }
 
 func (r *SendShipmentRepository) Update(sendShipment *model.SendShipment) error {
 	collection := r.db.Collection("sent-shipments")
-	if len(sendShipment.ShipmentId) == 0 {
+	if sendShipment.Obj.ShipmentModel.ShipmentId == 0 {
 		return errors.New("Shipment sent without Id cannot be updated")
 	}
-	ur, err := collection.ReplaceOne(context.TODO(), bson.M{"unsignedSendShipment.shipmentId": sendShipment.ShipmentId}, sendShipment)
+	ur, err := collection.ReplaceOne(context.TODO(), bson.M{"unsignedSendShipment.obj.shipmentModel.shipmentId": sendShipment.Obj.ShipmentModel.ShipmentId}, sendShipment)
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package router
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/Limechain/HCS-Integration-Node/app/business/apiservices"
 	sendShipmentModel "github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/model"
@@ -14,10 +15,55 @@ import (
 )
 
 type SendSendShipmentRequest struct {
-	ShipmentId  string `json:"shipmentId" bson:"contractId"`
-	SupplierId  string `json:"supplierId" bson:"supplierId"`
-	BuyerId     string `json:"buyerId" bson:"buyerId"`
-	Destination string `json:"destination" bson:"destination"`
+	Type        int         `json:"type" bson:"type"`
+	Obj         shipmentObj `json:"obj" bson:"obj"`
+	Destination string      `json:"destination" bson:"destination"`
+}
+
+type shipmentObj struct {
+	ShipmentModel          shipmentModel           `json:"shipmentModel" bson:"shipmentModel"`
+	SkuModels              []skuModel              `json:"skuModels" bson:"skuModels"`
+	SkuOriginModels        []skuOriginModel        `json:"skuOriginModels" bson:"skuOriginModels"`
+	ShipmentDocumentModels []shipmentDocumentModel `json:"shipmentDocumentModels" bson:"shipmentDocumentModels"`
+}
+
+type shipmentModel struct {
+	ShipmentId                int    `json:"shipmentId" bson:"shipmentId"`
+	ShipmentConsignmentNumber string `json:"shipmentConsignmentNumber" bson:"shipmentConsignmentNumber"`
+	ShipmentName              string `json:"shipmentName" bson:"shipmentName"`
+	ShipmentStatus            int    `json:"shipmentStatus" bson:"shipmentStatus"`
+	ShipmentOriginSiteId      int    `json:"shipmentOriginSiteId" bson:"shipmentOriginSiteId"`
+	ShipmentDestinationSiteId int    `json:"shipmentDestinationSiteId" bson:"shipmentDestinationSiteId"`
+	ShipmentDateOfShipment    int    `json:"shipmentDateOfShipment" bson:"shipmentDateOfShipment"`
+	ShipmentDateOfArrival     int    `json:"shipmentDateOfArrival" bson:"shipmentDateOfArrival"`
+	ShipmentDltAnchored       int    `json:"shipmentDltAnchored" bson:"shipmentDltAnchored"`
+	ShipmentDltProof          string `json:"shipmentDltProof" bson:"shipmentDltProof"`
+	ShipmentDeleted           int    `json:"shipmentDeleted" bson:"shipmentDeleted"`
+}
+
+type skuModel struct {
+	SkuId        int `json:"skuId" bson:"skuId"`
+	ShipmentId   int `json:"shipmentId" bson:"shipmentId"`
+	ProductId    int `json:"productId" bson:"productId"`
+	Quantity     int `json:"quantity" bson:"quantity"`
+	PricePerUnit int `json:"pricePerUnit" bson:"pricePerUnit"`
+	Currency     int `json:"currency" bson:"currency"`
+}
+
+type skuOriginModel struct {
+	SkuOriginId int `json:"skuOriginId" bson:"skuOriginId"`
+	SkuId       int `json:"skuId" bson:"skuId"`
+	ShipmentId  int `json:"shipmentId" bson:"shipmentId"`
+}
+
+type shipmentDocumentModel struct {
+	ShipmentDocumentId  int    `json:"shipmentDocumentId" bson:"shipmentDocumentId"`
+	ShipmentId          int    `json:"shipmentId" bson:"shipmentId"`
+	DocumentType        int    `json:"documentType" bson:"documentType"`
+	MimeType            string `json:"mimeType" bson:"mimeType"`
+	ShipmentDocumentUrl string `json:"shipmentDocumentUrl" bson:"shipmentDocumentUrl"`
+	SizeInBytes         int    `json:"sizeInBytes" bson:"sizeInBytes"`
+	Name                string `json:"name" bson:"name"`
 }
 
 type storedSentShipmentsResponse struct {
@@ -32,16 +78,73 @@ type storedSendShipmentResponse struct {
 
 type sendSendShipmentResponse struct {
 	api.IntegrationNodeAPIResponse
-	ShipmentId            string `json:"shipmentId, omitempty" bson:"shipmentId"`
+	ShipmentId            int    `json:"shipmentId, omitempty" bson:"shipmentId"`
 	SendShipmentHash      string `json:"sendShipmentHash, omitempty" bson:"sendShipmentHash"`
 	SendShipmentSignature string `json:"sendShipmentSignature, omitempty" bson:"sendShipmentSignature"`
 }
 
 func (req *SendSendShipmentRequest) toUnsignedSendShipment() *sendShipmentModel.UnsignedSendShipment {
+	shipmentDocuments := make([]sendShipmentModel.ShipmentDocumentModel, len(req.Obj.ShipmentDocumentModels))
+
+	for i, doc := range req.Obj.ShipmentDocumentModels {
+		shipmentDocuments[i] = sendShipmentModel.ShipmentDocumentModel{
+			ShipmentDocumentId:  doc.ShipmentDocumentId,
+			ShipmentId:          doc.ShipmentId,
+			DocumentType:        doc.DocumentType,
+			MimeType:            doc.MimeType,
+			ShipmentDocumentUrl: doc.ShipmentDocumentUrl,
+			SizeInBytes:         doc.SizeInBytes,
+			Name:                doc.Name,
+		}
+	}
+
+	skuOriginModels := make([]sendShipmentModel.SkuOriginModel, len(req.Obj.SkuOriginModels))
+
+	for i, skuOrigin := range req.Obj.SkuOriginModels {
+		skuOriginModels[i] = sendShipmentModel.SkuOriginModel{
+			SkuOriginId: skuOrigin.SkuOriginId,
+			SkuId:       skuOrigin.SkuId,
+			ShipmentId:  skuOrigin.ShipmentId,
+		}
+	}
+
+	skuModels := make([]sendShipmentModel.SkuModel, len(req.Obj.SkuModels))
+
+	for i, sku := range req.Obj.SkuModels {
+		skuModels[i] = sendShipmentModel.SkuModel{
+			SkuId:        sku.SkuId,
+			ShipmentId:   sku.ShipmentId,
+			ProductId:    sku.ProductId,
+			Quantity:     sku.Quantity,
+			PricePerUnit: sku.PricePerUnit,
+			Currency:     sku.Currency,
+		}
+	}
+
+	shipmentModel := sendShipmentModel.ShipmentModel{
+		ShipmentId:                req.Obj.ShipmentModel.ShipmentId,
+		ShipmentConsignmentNumber: req.Obj.ShipmentModel.ShipmentConsignmentNumber,
+		ShipmentName:              req.Obj.ShipmentModel.ShipmentName,
+		ShipmentStatus:            req.Obj.ShipmentModel.ShipmentStatus,
+		ShipmentOriginSiteId:      req.Obj.ShipmentModel.ShipmentOriginSiteId,
+		ShipmentDestinationSiteId: req.Obj.ShipmentModel.ShipmentDestinationSiteId,
+		ShipmentDateOfShipment:    req.Obj.ShipmentModel.ShipmentDateOfShipment,
+		ShipmentDateOfArrival:     req.Obj.ShipmentModel.ShipmentDateOfArrival,
+		ShipmentDltAnchored:       req.Obj.ShipmentModel.ShipmentDltAnchored,
+		ShipmentDltProof:          req.Obj.ShipmentModel.ShipmentDltProof,
+		ShipmentDeleted:           req.Obj.ShipmentModel.ShipmentDeleted,
+	}
+
+	shipmentObject := sendShipmentModel.ShipmentObj{
+		ShipmentModel:          shipmentModel,
+		SkuModels:              skuModels,
+		SkuOriginModels:        skuOriginModels,
+		ShipmentDocumentModels: shipmentDocuments,
+	}
+
 	return &sendShipmentModel.UnsignedSendShipment{
-		ShipmentId:  req.ShipmentId,
-		SupplierId:  req.SupplierId,
-		BuyerId:     req.BuyerId,
+		Type:        req.Type,
+		Obj:         shipmentObject,
 		Destination: req.Destination,
 	}
 }
@@ -59,7 +162,8 @@ func getAllStoredSentShipments(sendShipmentService *apiservices.SendShipmentServ
 
 func getSendShipmentById(sendShipmentService *apiservices.SendShipmentService) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		shipmentId := chi.URLParam(r, "shipmentId")
+		shipmentIdParam := chi.URLParam(r, "shipmentId")
+		shipmentId, _ := strconv.Atoi(shipmentIdParam)
 		storedSendShipment, err := sendShipmentService.GetSentShipment(shipmentId)
 		if err != nil {
 			render.JSON(w, r, storedSendShipmentResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, nil})
@@ -78,12 +182,12 @@ func sendSendShipment(sendShipmentService *apiservices.SendShipmentService) func
 			var mr *parser.MalformedRequest
 			if errors.As(err, &mr) {
 				log.Println(mr.Msg)
-				render.JSON(w, r, sendSendShipmentResponse{api.IntegrationNodeAPIResponse{Status: false, Error: mr.Msg}, "", "", ""})
+				render.JSON(w, r, sendSendShipmentResponse{api.IntegrationNodeAPIResponse{Status: false, Error: mr.Msg}, 0, "", ""})
 				return
 			}
 
 			log.Errorln(err.Error())
-			render.JSON(w, r, sendSendShipmentResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, "", "", ""})
+			render.JSON(w, r, sendSendShipmentResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, 0, "", ""})
 			return
 		}
 
@@ -93,7 +197,7 @@ func sendSendShipment(sendShipmentService *apiservices.SendShipmentService) func
 
 		shipmentId, sendShipmentHash, sendShipmentSignature, err := sendShipmentService.SaveAndSendSendShipment(unsignedSendShipment)
 		if err != nil {
-			render.JSON(w, r, sendSendShipmentResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, "", "", ""})
+			render.JSON(w, r, sendSendShipmentResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, 0, "", ""})
 			return
 		}
 

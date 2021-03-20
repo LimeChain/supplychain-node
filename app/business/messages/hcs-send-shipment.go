@@ -1,7 +1,7 @@
 package messages
 
 type dltSendShipment struct {
-	ShipmentId        string `json:"shipmentId"`
+	ShipmentId        int    `json:"shipmentId"`
 	SendShipmentHash  string `json:"sendShipmentHash"`
 	BuyerSignature    string `json:"buyerSignature"`
 	SupplierSignature string `json:"supplierSignature"`
@@ -12,7 +12,7 @@ type DLTSendShipmentMessage struct {
 	Data dltSendShipment `json:"data"`
 }
 
-func CreateDLTSendShipmentMessage(shipmentId, sendShipmentHash, buyerSignature, supplierSignature string) *DLTSendShipmentMessage {
+func CreateDLTSendShipmentMessage(shipmentId int, sendShipmentHash, buyerSignature, supplierSignature string) *DLTSendShipmentMessage {
 	return &DLTSendShipmentMessage{
 		BusinessMessage: BusinessMessage{Type: DLTMessageTypeSendShipment},
 		Data: dltSendShipment{
