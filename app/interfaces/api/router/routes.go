@@ -1,7 +1,7 @@
 package router
 
 const (
-	RouteRFP         = "rfp"
+	RouteProduct     = "product"
 	RouteProposal    = "proposal"
 	RouteContract    = "contract"
 	RoutePO          = "po"

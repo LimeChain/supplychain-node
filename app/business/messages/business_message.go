@@ -5,7 +5,7 @@ type BusinessMessage struct {
 }
 
 const (
-	P2PMessageTypeRFP              = "rfp"
+	P2PMessageTypeProduct          = "product"
 	P2PMessageTypeProposal         = "proposal"
 	P2PMessageTypeContractRequest  = "contractrequest"
 	P2PMessageTypeContractAccepted = "contractaccepted"

@@ -111,12 +111,12 @@ func createProposal(proposalService *apiservices.ProposalService) func(w http.Re
 			var mr *parser.MalformedRequest
 			if errors.As(err, &mr) {
 				log.Println(mr.Msg)
-				render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: mr.Msg}, 0})
+				render.JSON(w, r, createProductResponse{api.IntegrationNodeAPIResponse{Status: false, Error: mr.Msg}, 0})
 				return
 			}
 
 			log.Errorln(err.Error())
-			render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, 0})
+			render.JSON(w, r, createProductResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, 0})
 			return
 		}
 
@@ -126,11 +126,11 @@ func createProposal(proposalService *apiservices.ProposalService) func(w http.Re
 
 		_, err = proposalService.CreateProposal(proposal)
 		if err != nil {
-			render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, 0})
+			render.JSON(w, r, createProductResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, 0})
 			return
 		}
 
-		render.JSON(w, r, createRFPResponse{api.IntegrationNodeAPIResponse{Status: true, Error: ""}, 0})
+		render.JSON(w, r, createProductResponse{api.IntegrationNodeAPIResponse{Status: true, Error: ""}, 0})
 	}
 }
 
