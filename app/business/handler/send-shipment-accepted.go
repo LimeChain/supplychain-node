@@ -47,11 +47,6 @@ func (h *SendShipmentAcceptedHandler) Handle(msg *common.Message) error {
 		return errors.New("The sent shipment buyer signature was not the one stored. The supplier has tried to cheat you")
 	}
 
-	sendShipmentHash, err := h.sendShipmentService.Hash(&sendShipment.UnsignedSendShipment)
-	if err != nil {
-		return err
-	}
-
 	signatureCorrect, err := h.sendShipmentService.VerifySupplier(&sendShipment)
 	if err != nil {
 		return err
@@ -61,7 +56,15 @@ func (h *SendShipmentAcceptedHandler) Handle(msg *common.Message) error {
 		return errors.New("Invalid signature by the supplier")
 	}
 
-	dltMessage := messages.CreateDLTSendShipmentMessage(sendShipment.Obj.ShipmentModel.ShipmentId, sendShipmentHash, sendShipment.BuyerSignature, sendShipment.SupplierSignature)
+	dataAndSignaturesHash := h.sendShipmentService.HashDataAndSignatures(&sendShipment.UnsignedSendShipment, sendShipment.BuyerSignature, sendShipment.SupplierSignature)
+	sendShipment.SignedDataHash = dataAndSignaturesHash
+
+	err = h.sendShipmentRepo.Update(&sendShipment)
+	if err != nil {
+		return err
+	}
+
+	dltMessage := messages.CreateDLTSendShipmentMessage(dataAndSignaturesHash)
 
 	dltBytes, err := json.Marshal(dltMessage)
 	if err != nil {
@@ -74,12 +77,7 @@ func (h *SendShipmentAcceptedHandler) Handle(msg *common.Message) error {
 		return err
 	}
 
-	err = h.sendShipmentRepo.Update(&sendShipment)
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Verified and saved accepted sent shipment with id: %s\n", sendShipment.Obj.ShipmentModel.ShipmentId)
+	log.Infof("Verified and saved accepted sent shipment with id: %d\n", sendShipment.Obj.ShipmentModel.ShipmentId)
 	return nil
 }
 

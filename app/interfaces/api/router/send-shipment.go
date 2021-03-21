@@ -14,6 +14,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type ValidateShipmentMessageRequest struct {
+	Message string `json:"message" bson:"message"`
+}
+
+type validateShipmentMessageResponse struct {
+	api.IntegrationNodeAPIResponse
+	Shipment          sendShipmentModel.UnsignedSendShipment `json:"shipment, omitempty" bson:"shipment"`
+	BuyerSignature    string                                 `json:"buyerSignature" bson:"buyerSignature"`
+	SupplierSignature string                                 `json:"supplierSignature" bson:"supplierSignature"`
+}
+
 type SendSendShipmentRequest struct {
 	Type        int         `json:"type" bson:"type"`
 	Obj         shipmentObj `json:"obj" bson:"obj"`
@@ -210,10 +221,45 @@ func sendSendShipment(sendShipmentService *apiservices.SendShipmentService) func
 	}
 }
 
+func validateShipmentMessage(sendShipmentService *apiservices.SendShipmentService) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var validateShipment *ValidateShipmentMessageRequest
+
+		err := parser.DecodeJSONBody(w, r, &validateShipment)
+		if err != nil {
+			var mr *parser.MalformedRequest
+			if errors.As(err, &mr) {
+				log.Println(mr.Msg)
+				render.JSON(w, r, validateShipmentMessageResponse{api.IntegrationNodeAPIResponse{Status: false, Error: mr.Msg}, sendShipmentModel.UnsignedSendShipment{}, "", ""})
+				return
+			}
+
+			log.Errorln(err.Error())
+			render.JSON(w, r, validateShipmentMessageResponse{api.IntegrationNodeAPIResponse{Status: false, Error: err.Error()}, sendShipmentModel.UnsignedSendShipment{}, "", ""})
+			return
+		}
+
+		storedSendShipment, err := sendShipmentService.GetSentShipmentByDLTMessage(validateShipment.Message)
+
+		if storedSendShipment == nil {
+			render.JSON(w, r, validateShipmentMessageResponse{api.IntegrationNodeAPIResponse{Status: false, Error: "Invalid DLT message <> stored shipment info"}, sendShipmentModel.UnsignedSendShipment{}, "", ""})
+			return
+		}
+
+		render.JSON(w, r, validateShipmentMessageResponse{
+			IntegrationNodeAPIResponse: api.IntegrationNodeAPIResponse{Status: true, Error: ""},
+			Shipment:                   storedSendShipment.UnsignedSendShipment,
+			BuyerSignature:             storedSendShipment.BuyerSignature,
+			SupplierSignature:          storedSendShipment.SupplierSignature,
+		})
+	}
+}
+
 func NewSendShipmentRouter(sendShipmentService *apiservices.SendShipmentService) http.Handler {
 	r := chi.NewRouter()
 	r.Get("/", getAllStoredSentShipments(sendShipmentService))
 	r.Get("/{shipmentId}", getSendShipmentById(sendShipmentService))
 	r.Post("/", sendSendShipment(sendShipmentService))
+	r.Post("/validate", validateShipmentMessage(sendShipmentService))
 	return r
 }

@@ -11,6 +11,6 @@ const (
 )
 
 const (
-	DLTMessageTypeSendShipment = "send-shipment"
+	DLTMessageTypeSendShipment = "shipment"
 	// DLTMessageTypeReceivedShipment = "receive-shipment"
 )

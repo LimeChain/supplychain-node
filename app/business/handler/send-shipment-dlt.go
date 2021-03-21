@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,7 +20,6 @@ type DLTSendShipmentHandler struct {
 }
 
 func (h *DLTSendShipmentHandler) Handle(msg *common.Message) error {
-
 	var sendShipmentMsg messages.DLTSendShipmentMessage
 	err := json.Unmarshal(msg.Msg, &sendShipmentMsg)
 	if err != nil {
@@ -28,36 +28,14 @@ func (h *DLTSendShipmentHandler) Handle(msg *common.Message) error {
 
 	sendShipment := sendShipmentMsg.Data
 
-	// TODO add more validation
+	savedSendShipment, err := h.sendShipmentRepo.GetByHash(sendShipment.ShipmentHash)
 
-	if len(sendShipment.BuyerSignature) == 0 {
-		return errors.New("The sent shipment was not signed by the buyer")
+	if savedSendShipment == nil {
+		return errors.New("Saved hash is different then the DLT anchored")
 	}
 
-	if len(sendShipment.SupplierSignature) == 0 {
-		return errors.New("The sent shipment was not signed by the buyer")
-	}
-
-	savedSendShipment, err := h.sendShipmentRepo.GetByID(sendShipment.ShipmentId)
 	if err != nil {
 		return err
-	}
-
-	if savedSendShipment.BuyerSignature != sendShipment.BuyerSignature {
-		return errors.New("The sent shipment buyer signature was not the one stored")
-	}
-
-	if savedSendShipment.SupplierSignature != sendShipment.SupplierSignature {
-		return errors.New("The shipment sent supplier signature was not the one stored")
-	}
-
-	savedHash, err := h.sendShipmentService.Hash(&savedSendShipment.UnsignedSendShipment)
-	if err != nil {
-		return err
-	}
-
-	if savedHash != sendShipment.SendShipmentHash {
-		return errors.New("The send shipment hash was not the one stored")
 	}
 
 	sn := msg.Ctx.Value(hcs.SequenceNumberKey)
@@ -69,13 +47,14 @@ func (h *DLTSendShipmentHandler) Handle(msg *common.Message) error {
 
 	savedSendShipment.DLTAnchored = true
 	savedSendShipment.DLTProof = fmt.Sprintf("%d", sequenceNumber)
+	savedSendShipment.DLTMessage = hex.EncodeToString(msg.Msg)
 
 	err = h.sendShipmentRepo.Update(savedSendShipment)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("Sent shipment with Id: %s seen in the dlt and verified\n", sendShipment.ShipmentId)
+	log.Infof("Sent shipment with Id: %d seen in the dlt and verified\n", savedSendShipment.Obj.ShipmentModel.ShipmentId)
 	return nil
 }
 

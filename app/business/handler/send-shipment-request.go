@@ -56,7 +56,10 @@ func (h *SendShipmentRequestHandler) Handle(msg *common.Message) error {
 		return err
 	}
 
+	dataAndSignaturesHash := h.sendShipmentService.HashDataAndSignatures(&sendShipment.UnsignedSendShipment, sendShipment.BuyerSignature, sendShipmentSignature)
+
 	sendShipment.SupplierSignature = sendShipmentSignature
+	sendShipment.SignedDataHash = dataAndSignaturesHash
 
 	shipmentId, err := h.sendShipmentRepo.Save(&sendShipment)
 	if err != nil {
@@ -72,7 +75,7 @@ func (h *SendShipmentRequestHandler) Handle(msg *common.Message) error {
 	}
 	h.p2pClient.Send(&common.Message{Ctx: context.TODO(), Msg: p2pBytes}, remotePeerAddress)
 
-	log.Infof("Verified and saved shipment with id: %s\n", shipmentId)
+	log.Infof("Verified and saved shipment with id: %d\n", shipmentId)
 	return nil
 }
 

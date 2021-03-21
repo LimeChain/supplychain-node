@@ -6,10 +6,11 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"github.com/hashgraph/hedera-sdk-go"
-	_ "github.com/joho/godotenv/autoload"
 	"io/ioutil"
 	"os"
+
+	"github.com/hashgraph/hedera-sdk-go"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func generateEd25519Keypair() ed25519.PrivateKey {

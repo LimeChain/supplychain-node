@@ -58,4 +58,6 @@ type SendShipment struct {
 	SupplierSignature    string `json:"supplierSignature" bson:"supplierSignature"`
 	DLTAnchored          bool   `json:"DLTAnchored" bson:"DLTAnchored"`
 	DLTProof             string `json:"DLTProof" bson:"DLTProof"`
+	DLTMessage           string `json:"DLTMessage" bson:"DLTMessage"`
+	SignedDataHash       string `json:"signedDataHash" bson:"signedDataHash"`
 }

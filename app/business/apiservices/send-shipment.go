@@ -25,6 +25,10 @@ func (ss *SendShipmentService) GetSentShipment(shipmentId int) (*sendShipmentMod
 	return ss.ssr.GetByID(shipmentId)
 }
 
+func (ss *SendShipmentService) GetSentShipmentByDLTMessage(dltMessage string) (*sendShipmentModel.SendShipment, error) {
+	return ss.ssr.GetByDLTMessage(dltMessage)
+}
+
 func (ss *SendShipmentService) SaveAndSendSendShipment(unsignedSendShipment *sendShipmentModel.UnsignedSendShipment) (sendShipmentId int, sendShipmentHash, sendShipmentSignature string, err error) {
 	sendShipmentHash, err = ss.sss.Hash(unsignedSendShipment)
 	if err != nil {

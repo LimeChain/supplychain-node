@@ -17,14 +17,26 @@ type SendShipmentService struct {
 
 func (ss *SendShipmentService) Hash(unsignedSendShipment *model.UnsignedSendShipment) (string, error) {
 	var sb strings.Builder
-	sb.WriteString(string(unsignedSendShipment.Obj.ShipmentModel.ShipmentId))
-	sb.WriteRune(',')
-	sb.WriteString(unsignedSendShipment.Obj.ShipmentModel.ShipmentConsignmentNumber)
-	sb.WriteRune(',')
-	sb.WriteString(string(unsignedSendShipment.Obj.ShipmentModel.ShipmentStatus))
+
+	unsignedSendShipmentBytes := []byte(fmt.Sprintf("%v", unsignedSendShipment))
+
+	sb.Write(unsignedSendShipmentBytes)
 
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(sb.String()))), nil
+}
 
+func (ss *SendShipmentService) HashDataAndSignatures(unsignedSendShipment *model.UnsignedSendShipment, buyerSignature, sellerSignature string) string {
+	var sb strings.Builder
+
+	unsignedSendShipmentBytes := []byte(fmt.Sprintf("%v", unsignedSendShipment))
+
+	sb.Write(unsignedSendShipmentBytes)
+	sb.WriteRune(',')
+	sb.WriteString(buyerSignature)
+	sb.WriteRune(',')
+	sb.WriteString(sellerSignature)
+
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(sb.String())))
 }
 
 func (ss *SendShipmentService) Sign(unsignedSendShipment *model.UnsignedSendShipment) (string, error) {

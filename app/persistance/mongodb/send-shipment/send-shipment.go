@@ -48,6 +48,26 @@ func (r *SendShipmentRepository) GetByID(id int) (*model.SendShipment, error) {
 	return &result, nil
 }
 
+func (r *SendShipmentRepository) GetByHash(hash string) (*model.SendShipment, error) {
+	var result model.SendShipment
+	collection := r.db.Collection("sent-shipments")
+	if err := collection.FindOne(context.TODO(), bson.M{"signedDataHash": hash}).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (r *SendShipmentRepository) GetByDLTMessage(dltMessage string) (*model.SendShipment, error) {
+	var result model.SendShipment
+	collection := r.db.Collection("sent-shipments")
+	if err := collection.FindOne(context.TODO(), bson.M{"DLTMessage": dltMessage}).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 func (r *SendShipmentRepository) Save(sendShipment *model.SendShipment) (int, error) {
 	collection := r.db.Collection("sent-shipments")
 	if sendShipment.Obj.ShipmentModel.ShipmentId == 0 {
