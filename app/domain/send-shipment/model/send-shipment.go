@@ -59,5 +59,6 @@ type SendShipment struct {
 	DLTAnchored          bool   `json:"DLTAnchored" bson:"DLTAnchored"`
 	DLTProof             string `json:"DLTProof" bson:"DLTProof"`
 	DLTMessage           string `json:"DLTMessage" bson:"DLTMessage"`
+	DLTTransactionId     string `json:"DLTTransactionId" bson:"DLTTransactionId"`
 	SignedDataHash       string `json:"signedDataHash" bson:"signedDataHash"`
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/ed25519"
 	"fmt"
+	"regexp"
+	"strconv"
 
 	"github.com/Limechain/pwc-bat-node/app/interfaces/common"
 	"github.com/hashgraph/hedera-sdk-go/v2"
@@ -11,6 +13,16 @@ import (
 )
 
 const SequenceNumberKey = "SequenceNumber"
+const TransactionIdKey = "TransactionId"
+const DLTValuesKey = "DLTValues"
+
+type DLTValues struct {
+	m map[string]string
+}
+
+func (v DLTValues) Get(key string) string {
+	return v.m[key]
+}
 
 type HCSClient struct {
 	client  *hedera.Client
@@ -44,9 +56,15 @@ func (c *HCSClient) Listen(receiver common.MessageReceiver) error {
 		Subscribe(
 			c.client,
 			func(resp hedera.TopicMessage) {
-				fmt.Println("UDri resp.TransactionID")
-				fmt.Println(resp.TransactionID)
-				ctx := context.WithValue(context.Background(), SequenceNumberKey, resp.SequenceNumber)
+				txId := prepareTxId(fmt.Sprintf("%v", resp.TransactionID))
+				sequenceNumber := strconv.FormatUint(resp.SequenceNumber, 10)
+
+				dltContextValues := DLTValues{map[string]string{
+					SequenceNumberKey: sequenceNumber,
+					TransactionIdKey:  txId,
+				}}
+
+				ctx := context.WithValue(context.Background(), DLTValuesKey, dltContextValues)
 				receiver.Receive(&common.Message{Msg: resp.Contents, Ctx: ctx})
 			})
 
@@ -95,4 +113,15 @@ func NewHCSClient(account string, key ed25519.PrivateKey, topicID string, mainne
 	log.Infof("[HCS] HCS Client started with account ID: %s\n", account)
 
 	return &HCSClient{client: client, topicID: hcsTopicId}
+}
+
+func prepareTxId(rawTxId string) string {
+	// Make a Regex to say we only want numbers
+	reg, err := regexp.Compile("[^0-9]+")
+	if err != nil {
+		log.Fatal(err)
+	}
+	processedTxId := reg.ReplaceAllString(rawTxId, "")
+
+	return processedTxId
 }
