@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/Limechain/HCS-Integration-Node/app/domain/product/repository"
+	"github.com/Limechain/pwc-bat-node/app/domain/product/repository"
 )
 
 type ProductService struct {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 
-	"github.com/Limechain/HCS-Integration-Node/app/interfaces/common"
+	"github.com/Limechain/pwc-bat-node/app/interfaces/common"
 	"github.com/hashgraph/hedera-sdk-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -44,6 +44,7 @@ func (c *HCSClient) Listen(receiver common.MessageReceiver) error {
 		Subscribe(
 			*c.mirrorClient,
 			func(resp hedera.MirrorConsensusTopicResponse) {
+
 				ctx := context.WithValue(context.Background(), SequenceNumberKey, resp.SequenceNumber)
 				receiver.Receive(&common.Message{Msg: resp.Message, Ctx: ctx})
 			},

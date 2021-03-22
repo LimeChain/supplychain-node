@@ -3,9 +3,9 @@ package handler
 import (
 	"encoding/json"
 
-	"github.com/Limechain/HCS-Integration-Node/app/business/messages"
-	"github.com/Limechain/HCS-Integration-Node/app/domain/product/repository"
-	"github.com/Limechain/HCS-Integration-Node/app/interfaces/common"
+	"github.com/Limechain/pwc-bat-node/app/business/messages"
+	"github.com/Limechain/pwc-bat-node/app/domain/product/repository"
+	"github.com/Limechain/pwc-bat-node/app/interfaces/common"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/model"
+	"github.com/Limechain/pwc-bat-node/app/domain/send-shipment/model"
 )
 
 type SendShipmentService struct {

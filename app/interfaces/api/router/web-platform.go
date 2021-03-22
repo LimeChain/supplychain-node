@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Limechain/HCS-Integration-Node/app/business/apiservices"
+	"github.com/Limechain/pwc-bat-node/app/business/apiservices"
 	"github.com/go-chi/chi"
 )
 

@@ -1,6 +1,6 @@
 package repository
 
-import "github.com/Limechain/HCS-Integration-Node/app/domain/product/model"
+import "github.com/Limechain/pwc-bat-node/app/domain/product/model"
 
 type ProductRepository interface {
 	GetAll() ([]*model.Product, error)

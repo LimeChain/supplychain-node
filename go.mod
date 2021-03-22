@@ -1,4 +1,4 @@
-module github.com/Limechain/HCS-Integration-Node
+module github.com/Limechain/pwc-bat-node
 
 go 1.12
 

@@ -1,7 +1,7 @@
 package messages
 
 import (
-	"github.com/Limechain/HCS-Integration-Node/app/domain/product/model"
+	"github.com/Limechain/pwc-bat-node/app/domain/product/model"
 )
 
 type ProductMessage struct {

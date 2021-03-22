@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Limechain/HCS-Integration-Node/app/business/messages"
-	"github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/repository"
-	"github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/service"
-	"github.com/Limechain/HCS-Integration-Node/app/interfaces/common"
-	"github.com/Limechain/HCS-Integration-Node/app/interfaces/dlt/hcs"
+	"github.com/Limechain/pwc-bat-node/app/business/messages"
+	"github.com/Limechain/pwc-bat-node/app/domain/send-shipment/repository"
+	"github.com/Limechain/pwc-bat-node/app/domain/send-shipment/service"
+	"github.com/Limechain/pwc-bat-node/app/interfaces/common"
+	"github.com/Limechain/pwc-bat-node/app/interfaces/dlt/hcs"
 	log "github.com/sirupsen/logrus"
 )
 

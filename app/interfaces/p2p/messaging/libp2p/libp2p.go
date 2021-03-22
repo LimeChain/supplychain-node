@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Limechain/HCS-Integration-Node/app/interfaces/common"
+	"github.com/Limechain/pwc-bat-node/app/interfaces/common"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"

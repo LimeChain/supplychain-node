@@ -3,7 +3,7 @@ package product
 import (
 	"context"
 
-	"github.com/Limechain/HCS-Integration-Node/app/domain/product/model"
+	"github.com/Limechain/pwc-bat-node/app/domain/product/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/Limechain/HCS-Integration-Node/app/business/apiservices"
-	"github.com/Limechain/HCS-Integration-Node/app/interfaces/api"
-	parser "github.com/Limechain/HCS-Integration-Node/app/interfaces/api/parser"
+	"github.com/Limechain/pwc-bat-node/app/business/apiservices"
+	"github.com/Limechain/pwc-bat-node/app/interfaces/api"
+	parser "github.com/Limechain/pwc-bat-node/app/interfaces/api/parser"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	log "github.com/sirupsen/logrus"

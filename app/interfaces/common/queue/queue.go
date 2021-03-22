@@ -1,7 +1,7 @@
 package queue
 
 import (
-	"github.com/Limechain/HCS-Integration-Node/app/interfaces/common"
+	"github.com/Limechain/pwc-bat-node/app/interfaces/common"
 )
 
 type MessageQueue struct {

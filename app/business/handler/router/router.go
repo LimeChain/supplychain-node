@@ -1,8 +1,8 @@
 package router
 
 import (
-	"github.com/Limechain/HCS-Integration-Node/app/business/handler"
-	"github.com/Limechain/HCS-Integration-Node/app/interfaces/common"
+	"github.com/Limechain/pwc-bat-node/app/business/handler"
+	"github.com/Limechain/pwc-bat-node/app/interfaces/common"
 	log "github.com/sirupsen/logrus"
 )
 

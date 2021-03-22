@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/Limechain/HCS-Integration-Node/app/business/messages"
-	sendShipmentModel "github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/model"
-	sendShipmentRepo "github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/repository"
-	sendShipmentService "github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/service"
-	"github.com/Limechain/HCS-Integration-Node/app/interfaces/common"
+	"github.com/Limechain/pwc-bat-node/app/business/messages"
+	sendShipmentModel "github.com/Limechain/pwc-bat-node/app/domain/send-shipment/model"
+	sendShipmentRepo "github.com/Limechain/pwc-bat-node/app/domain/send-shipment/repository"
+	sendShipmentService "github.com/Limechain/pwc-bat-node/app/domain/send-shipment/service"
+	"github.com/Limechain/pwc-bat-node/app/interfaces/common"
 )
 
 type SendShipmentService struct {

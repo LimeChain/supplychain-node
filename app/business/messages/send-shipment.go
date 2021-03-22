@@ -1,6 +1,6 @@
 package messages
 
-import "github.com/Limechain/HCS-Integration-Node/app/domain/send-shipment/model"
+import "github.com/Limechain/pwc-bat-node/app/domain/send-shipment/model"
 
 type SendShipmentMessage struct {
 	BusinessMessage

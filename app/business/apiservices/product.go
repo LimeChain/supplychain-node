@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/Limechain/HCS-Integration-Node/app/business/messages"
-	productModel "github.com/Limechain/HCS-Integration-Node/app/domain/product/model"
-	productRepository "github.com/Limechain/HCS-Integration-Node/app/domain/product/repository"
-	"github.com/Limechain/HCS-Integration-Node/app/interfaces/common"
+	"github.com/Limechain/pwc-bat-node/app/business/messages"
+	productModel "github.com/Limechain/pwc-bat-node/app/domain/product/model"
+	productRepository "github.com/Limechain/pwc-bat-node/app/domain/product/repository"
+	"github.com/Limechain/pwc-bat-node/app/interfaces/common"
 )
 
 type ProductService struct {
