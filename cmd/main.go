@@ -69,7 +69,6 @@ func setupDLTClient(
 
 	shouldConnectToMainnet := (os.Getenv("HCS_MAINNET") == "true")
 	hcsClientID := os.Getenv("HCS_CLIENT_ID")
-	hcsMirrorNodeID := os.Getenv("HCS_MIRROR_NODE_ADDRESS")
 	topicID := os.Getenv("HCS_TOPIC_ID")
 
 	var parser json.JSONBusinessMesssageParser
@@ -84,7 +83,7 @@ func setupDLTClient(
 
 	q := queue.New(ch, r)
 
-	hcsClient := hcs.NewHCSClient(hcsClientID, prvKey, hcsMirrorNodeID, topicID, shouldConnectToMainnet)
+	hcsClient := hcs.NewHCSClient(hcsClientID, prvKey, topicID, shouldConnectToMainnet)
 
 	err := hcsClient.Listen(q)
 	if err != nil {

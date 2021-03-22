@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/hashgraph/hedera-sdk-go"
+	"github.com/hashgraph/hedera-sdk-go/v2"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -34,12 +34,12 @@ func createHederaAccount(key ed25519.PrivateKey) hedera.AccountID {
 		panic(err)
 	}
 
-	operatorPrivateKey, err := hedera.Ed25519PrivateKeyFromString(os.Getenv("HCS_OPERATOR_PRV_KEY"))
+	operatorPrivateKey, err := hedera.PrivateKeyFromString(os.Getenv("HCS_OPERATOR_PRV_KEY"))
 	if err != nil {
 		panic(err)
 	}
 
-	newKey, err := hedera.Ed25519PrivateKeyFromBytes(key)
+	newKey, err := hedera.PrivateKeyFromBytes(key)
 	if err != nil {
 		panic(err)
 	}
@@ -70,11 +70,11 @@ func createHederaAccount(key ed25519.PrivateKey) hedera.AccountID {
 		panic(err)
 	}
 
-	newAccountID := transactionReceipt.GetAccountID()
+	newAccountID := *transactionReceipt.AccountID
 
-	transactionID, err = hedera.NewCryptoTransferTransaction().
-		AddSender(operatorAccountID, hedera.NewHbar(100)).
-		AddRecipient(newAccountID, hedera.NewHbar(100)).
+	transactionID, err = hedera.NewTransferTransaction().
+		AddHbarTransfer(operatorAccountID, hedera.NewHbar(-100)).
+		AddHbarTransfer(newAccountID, hedera.NewHbar(100)).
 		Execute(client)
 
 	if err != nil {

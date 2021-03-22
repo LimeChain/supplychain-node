@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/hashgraph/hedera-sdk-go"
-	_ "github.com/joho/godotenv/autoload"
 	"os"
+
+	"github.com/hashgraph/hedera-sdk-go/v2"
+	_ "github.com/joho/godotenv/autoload"
 )
 
-func createHCSTopic(a, b hedera.PublicKey) hedera.ConsensusTopicID {
+func createHCSTopic(a, b hedera.PublicKey) hedera.TopicID {
 	shouldConnectToMainnet := (os.Getenv("HCS_MAINNET") == "true")
 
 	operatorAccountID, err := hedera.AccountIDFromString(os.Getenv("HCS_OPERATOR_ID"))
@@ -15,12 +16,10 @@ func createHCSTopic(a, b hedera.PublicKey) hedera.ConsensusTopicID {
 		panic(err)
 	}
 
-	operatorPrivateKey, err := hedera.Ed25519PrivateKeyFromString(os.Getenv("HCS_OPERATOR_PRV_KEY"))
+	operatorPrivateKey, err := hedera.PrivateKeyFromString(os.Getenv("HCS_OPERATOR_PRV_KEY"))
 	if err != nil {
 		panic(err)
 	}
-
-	pubKeys := []hedera.PublicKey{a, b}
 
 	var client *hedera.Client
 
@@ -32,12 +31,11 @@ func createHCSTopic(a, b hedera.PublicKey) hedera.ConsensusTopicID {
 
 	client = client.SetOperator(operatorAccountID, operatorPrivateKey)
 
-	thresholdKey := hedera.NewThresholdKey(1).AddAll(pubKeys)
-
-	transactionID, err := hedera.NewConsensusTopicCreateTransaction().
+	transactionID, err := hedera.NewTopicCreateTransaction().
 		SetAdminKey(operatorPrivateKey.PublicKey()).
 		SetAutoRenewAccountID(operatorAccountID).
-		SetSubmitKey(thresholdKey).
+		SetSubmitKey(a).
+		SetSubmitKey(b).
 		Execute(client)
 
 	if err != nil {
@@ -50,7 +48,7 @@ func createHCSTopic(a, b hedera.PublicKey) hedera.ConsensusTopicID {
 		panic(err)
 	}
 
-	topicID := transactionReceipt.GetConsensusTopicID()
+	topicID := *transactionReceipt.TopicID
 
 	return topicID
 
@@ -61,12 +59,12 @@ func main() {
 	a := os.Getenv("A_PUB_KEY")
 	b := os.Getenv("B_PUB_KEY")
 
-	aPubKey, err := hedera.Ed25519PublicKeyFromString(a)
+	aPubKey, err := hedera.PublicKeyFromString(a)
 	if err != nil {
 		panic(err)
 	}
 
-	bPubKey, err := hedera.Ed25519PublicKeyFromString(b)
+	bPubKey, err := hedera.PublicKeyFromString(b)
 	if err != nil {
 		panic(err)
 	}

@@ -3,22 +3,22 @@ package hcs
 import (
 	"context"
 	"crypto/ed25519"
+	"fmt"
 
 	"github.com/Limechain/pwc-bat-node/app/interfaces/common"
-	"github.com/hashgraph/hedera-sdk-go"
+	"github.com/hashgraph/hedera-sdk-go/v2"
 	log "github.com/sirupsen/logrus"
 )
 
 const SequenceNumberKey = "SequenceNumber"
 
 type HCSClient struct {
-	client       *hedera.Client
-	mirrorClient *hedera.MirrorClient
-	topicID      hedera.ConsensusTopicID
+	client  *hedera.Client
+	topicID hedera.TopicID
 }
 
 func (c *HCSClient) Send(msg *common.Message) error {
-	id, err := hedera.NewConsensusMessageSubmitTransaction().
+	id, err := hedera.NewTopicMessageSubmitTransaction().
 		SetTopicID(c.topicID).
 		SetMessage(msg.Msg).
 		Execute(c.client)
@@ -33,23 +33,21 @@ func (c *HCSClient) Send(msg *common.Message) error {
 		return err
 	}
 
-	log.Infof("Sent message to HCS with Id :%s\n", id.String())
+	log.Infof("Sent message to HCS with Id :%s\n", id.TransactionID.String())
 
 	return nil
 }
 
 func (c *HCSClient) Listen(receiver common.MessageReceiver) error {
-	_, err := hedera.NewMirrorConsensusTopicQuery().
+	_, err := hedera.NewTopicMessageQuery().
 		SetTopicID(c.topicID).
 		Subscribe(
-			*c.mirrorClient,
-			func(resp hedera.MirrorConsensusTopicResponse) {
-
+			c.client,
+			func(resp hedera.TopicMessage) {
+				fmt.Println("UDri resp.TransactionID")
+				fmt.Println(resp.TransactionID)
 				ctx := context.WithValue(context.Background(), SequenceNumberKey, resp.SequenceNumber)
-				receiver.Receive(&common.Message{Msg: resp.Message, Ctx: ctx})
-			},
-			func(err error) {
-				log.Errorln(err.Error())
+				receiver.Receive(&common.Message{Msg: resp.Contents, Ctx: ctx})
 			})
 
 	if err != nil {
@@ -62,26 +60,17 @@ func (c *HCSClient) Close() error {
 	if err := c.client.Close(); err != nil {
 		return err
 	}
-
-	if err := c.mirrorClient.Close(); err != nil {
-		return err
-	}
 	return nil
 }
 
-func NewHCSClient(account string, key ed25519.PrivateKey, mirrorNodeAddress, topicID string, mainnet bool) *HCSClient {
+func NewHCSClient(account string, key ed25519.PrivateKey, topicID string, mainnet bool) *HCSClient {
 
-	hcsPrvKey, err := hedera.Ed25519PrivateKeyFromBytes(key)
+	hcsPrvKey, err := hedera.PrivateKeyFromBytes(key)
 	if err != nil {
 		panic(err)
 	}
 
 	acc, err := hedera.AccountIDFromString(account)
-	if err != nil {
-		panic(err)
-	}
-
-	mirrorClient, err := hedera.NewMirrorClient(mirrorNodeAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -105,5 +94,5 @@ func NewHCSClient(account string, key ed25519.PrivateKey, mirrorNodeAddress, top
 
 	log.Infof("[HCS] HCS Client started with account ID: %s\n", account)
 
-	return &HCSClient{client: client, mirrorClient: &mirrorClient, topicID: hcsTopicId}
+	return &HCSClient{client: client, topicID: hcsTopicId}
 }

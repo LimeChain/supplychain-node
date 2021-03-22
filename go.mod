@@ -9,8 +9,8 @@ require (
 	github.com/go-chi/render v1.0.1
 	github.com/golang/gddo v0.0.0-20200611223618-a4829ef13274 // indirect
 	github.com/google/martian v2.1.0+incompatible
-	github.com/google/uuid v1.1.1
-	github.com/hashgraph/hedera-sdk-go v0.7.0
+	github.com/google/uuid v1.1.2
+	github.com/hashgraph/hedera-sdk-go/v2 v2.1.4
 	github.com/joho/godotenv v1.3.0
 	github.com/libp2p/go-libp2p v0.10.0
 	github.com/libp2p/go-libp2p-core v0.6.0
@@ -21,5 +21,4 @@ require (
 	github.com/swaggo/http-swagger v0.0.0-20200308142732-58ac5e232fba
 	github.com/swaggo/swag v1.6.7
 	go.mongodb.org/mongo-driver v1.3.4
-	golang.org/x/net v0.0.0-20200425230154-ff2c4b7c35a0 // indirect
 )
