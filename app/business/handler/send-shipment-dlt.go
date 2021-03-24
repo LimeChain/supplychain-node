@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"os"
 
 	"github.com/Limechain/pwc-bat-node/app/business/messages"
 	"github.com/Limechain/pwc-bat-node/app/domain/send-shipment/repository"
@@ -16,6 +19,17 @@ import (
 type DLTSendShipmentHandler struct {
 	sendShipmentRepo    repository.SendShipmentRepository
 	sendShipmentService *service.SendShipmentService
+}
+
+type NodeJsDltRequest struct {
+	ShipmentId     int    `json:"shipmentId"`
+	ShipmentStatus int    `json:"shipmentStatus"`
+	Dlt            string `json:"dlt"`
+}
+
+type NodeJsRequestWrapper struct {
+	Ac string `json:"ac"`
+	Pl string `json:"pl"`
 }
 
 func (h *DLTSendShipmentHandler) Handle(msg *common.Message) error {
@@ -44,10 +58,40 @@ func (h *DLTSendShipmentHandler) Handle(msg *common.Message) error {
 	savedSendShipment.DLTProof = sn
 	savedSendShipment.DLTTransactionId = txId
 	savedSendShipment.DLTMessage = hex.EncodeToString(msg.Msg)
+	log.Println("RECEIVED")
+	log.Println(savedSendShipment.Obj.ShipmentModel.ShipmentId)
+	log.Println(savedSendShipment.DLTTransactionId)
+	log.Println(savedSendShipment.DLTMessage)
 
 	err = h.sendShipmentRepo.Update(savedSendShipment)
 	if err != nil {
 		return err
+	}
+
+	// values := map[string]string{"ac": "c", "pl": {"shipmentId": savedSendShipment.Obj.ShipmentModel.ShipmentId, "dlt": savedSendShipment.DLTTransactionId}}
+	nodeJsRequest := NodeJsDltRequest{
+		ShipmentId:     savedSendShipment.Obj.ShipmentModel.ShipmentId,
+		ShipmentStatus: savedSendShipment.Obj.ShipmentModel.ShipmentStatus,
+		Dlt:            savedSendShipment.DLTTransactionId,
+	}
+	nodeJsRequestString, err := json.Marshal(nodeJsRequest)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	values := NodeJsRequestWrapper{
+		Ac: "c",
+		Pl: string(nodeJsRequestString),
+	}
+	json_data, err := json.Marshal(values)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = http.Post(os.Getenv("NODEJS_SERVER"), "application/json", bytes.NewBuffer(json_data))
+	if err != nil {
+		log.Println("Error:")
+		log.Fatal(err)
 	}
 
 	log.Infof("Sent shipment with Id: %d seen in the dlt and verified\n", savedSendShipment.Obj.ShipmentModel.ShipmentId)
