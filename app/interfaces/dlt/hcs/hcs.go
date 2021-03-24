@@ -56,8 +56,13 @@ func (c *HCSClient) Listen(receiver common.MessageReceiver) error {
 		Subscribe(
 			c.client,
 			func(resp hedera.TopicMessage) {
+				log.Infof("[HCS] The topic response received %s\n", resp)
+
 				txId := prepareTxId(fmt.Sprintf("%v", resp.TransactionID))
 				sequenceNumber := strconv.FormatUint(resp.SequenceNumber, 10)
+
+				log.Infof("[HCS] The topic response received - TransactionID: %s\n", txId)
+				log.Infof("[HCS] The topic response received - SequenceNumber ID: %s\n", sequenceNumber)
 
 				dltContextValues := DLTValues{map[string]string{
 					SequenceNumberKey: sequenceNumber,
