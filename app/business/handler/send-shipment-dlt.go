@@ -22,8 +22,9 @@ type DLTSendShipmentHandler struct {
 }
 
 type NodeJsDltRequest struct {
-	ShipmentId int    `json:"shipmentId"`
-	Dlt        string `json:"dlt"`
+	ShipmentId     int    `json:"shipmentId"`
+	ShipmentStatus int    `json:"shipmentStatus"`
+	Dlt            string `json:"dlt"`
 }
 
 type NodeJsRequestWrapper struct {
@@ -69,8 +70,9 @@ func (h *DLTSendShipmentHandler) Handle(msg *common.Message) error {
 
 	// values := map[string]string{"ac": "c", "pl": {"shipmentId": savedSendShipment.Obj.ShipmentModel.ShipmentId, "dlt": savedSendShipment.DLTTransactionId}}
 	nodeJsRequest := NodeJsDltRequest{
-		ShipmentId: savedSendShipment.Obj.ShipmentModel.ShipmentId,
-		Dlt:        savedSendShipment.DLTTransactionId,
+		ShipmentId:     savedSendShipment.Obj.ShipmentModel.ShipmentId,
+		ShipmentStatus: savedSendShipment.Obj.ShipmentModel.ShipmentStatus,
+		Dlt:            savedSendShipment.DLTTransactionId,
 	}
 	nodeJsRequestString, err := json.Marshal(nodeJsRequest)
 	if err != nil {
