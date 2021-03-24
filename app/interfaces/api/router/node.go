@@ -39,10 +39,12 @@ func connectPeer(nodeService *apiservices.NodeService) func(w http.ResponseWrite
 		}
 
 		peerAddresses := connectPeerRequest.PeerAddresses
+		log.Println(peerAddresses)
 		for _, peerAddress := range peerAddresses {
 			// ToDo: Handle the returned value
 			_, err = nodeService.Connect(peerAddress)
 			if err != nil {
+				log.Println(err)
 				return
 			}
 		}

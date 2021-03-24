@@ -28,6 +28,8 @@ func getPeerPublicKey() ed25519.PublicKey {
 func getPrivateKey() ed25519.PrivateKey {
 
 	keyPath := os.Getenv("PRIVATE_KEY_FILE")
+	fmt.Errorf(keyPath)
+
 
 	info, err := os.Stat(keyPath)
 	if os.IsNotExist(err) {

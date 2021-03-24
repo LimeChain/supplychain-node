@@ -1,0 +1,13 @@
+FROM golang:1.14.2
+
+WORKDIR /usr/src/app
+
+COPY ./install_prerequisites.sh ./install_prerequisites.sh
+
+RUN chmod +x ./install_prerequisites.sh&& /bin/bash ./install_prerequisites.sh
+
+COPY ./ ./
+
+RUN mv /usr/src/app/env/.env.prod.01 /usr/src/app/.env 
+
+CMD ["/bin/bash", "./start.sh"]

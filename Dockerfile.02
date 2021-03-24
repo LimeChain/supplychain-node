@@ -8,4 +8,6 @@ RUN chmod +x ./install_prerequisites.sh&& /bin/bash ./install_prerequisites.sh
 
 COPY ./ ./
 
+RUN mv /usr/src/app/env/.env.prod.02 /usr/src/app/.env 
+
 CMD ["/bin/bash", "./start.sh"]
