@@ -25,6 +25,7 @@ type NodeJsDltRequest struct {
 	ShipmentId     int    `json:"shipmentId"`
 	ShipmentStatus int    `json:"shipmentStatus"`
 	Dlt            string `json:"dlt"`
+	Hash            string `json:"hash"`
 }
 
 type NodeJsRequestWrapper struct {
@@ -73,6 +74,7 @@ func (h *DLTSendShipmentHandler) Handle(msg *common.Message) error {
 		ShipmentId:     savedSendShipment.Obj.ShipmentModel.ShipmentId,
 		ShipmentStatus: savedSendShipment.Obj.ShipmentModel.ShipmentStatus,
 		Dlt:            savedSendShipment.DLTTransactionId,
+		Hash:           savedSendShipment.SignedDataHash,
 	}
 	nodeJsRequestString, err := json.Marshal(nodeJsRequest)
 	if err != nil {
