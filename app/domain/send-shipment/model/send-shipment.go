@@ -28,12 +28,12 @@ type ShipmentModel struct {
 }
 
 type SkuModel struct {
-	SkuId        int `json:"skuId" bson:"skuId"`
-	ShipmentId   int `json:"shipmentId" bson:"shipmentId"`
-	ProductId    int `json:"productId" bson:"productId"`
-	Quantity     int `json:"quantity" bson:"quantity"`
-	PricePerUnit int `json:"pricePerUnit" bson:"pricePerUnit"`
-	Currency     int `json:"currency" bson:"currency"`
+	SkuId        int     `json:"skuId" bson:"skuId"`
+	ShipmentId   int     `json:"shipmentId" bson:"shipmentId"`
+	ProductId    int     `json:"productId" bson:"productId"`
+	Quantity     int     `json:"quantity" bson:"quantity"`
+	PricePerUnit float32 `json:"pricePerUnit" bson:"pricePerUnit"`
+	Currency     int     `json:"currency" bson:"currency"`
 }
 
 type SkuOriginModel struct {
