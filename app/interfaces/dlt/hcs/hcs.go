@@ -117,7 +117,7 @@ func (c *HCSClient) Send(msg *common.Message) error {
 
 func (c *HCSClient) Listen(receiver common.MessageReceiver) error {
 	initialTimeStamp := time.Now()
-	go c.beginWatching(receiver, string(initialTimeStamp.Second()))
+	go c.beginWatching(receiver, strconv.Itoa(initialTimeStamp.Second()))
 
 	return nil
 }
