@@ -116,8 +116,8 @@ func (c *HCSClient) Send(msg *common.Message) error {
 }
 
 func (c *HCSClient) Listen(receiver common.MessageReceiver) error {
-	initialTimeStamp := time.Now()
-	go c.beginWatching(receiver, strconv.Itoa(initialTimeStamp.Second()))
+	initialTimeStamp := time.Now().Unix()
+	go c.beginWatching(receiver, strconv.Itoa(int(initialTimeStamp)))
 
 	return nil
 }
@@ -154,11 +154,10 @@ func (c *HCSClient) getMessagesAfterTimestamp(initialTimeStamp string) ([]Messag
 }
 
 func (c *HCSClient) getTransaction(timestamp string) (*Response, error) {
-	query := fmt.Sprintf("/%s/transactions?timestamp=gt:%s",
-		c.topicID.String(),
+	query := fmt.Sprintf("?timestamp=%s",
 		timestamp)
 
-	messagesQuery := fmt.Sprintf("%s%s%s", "https://testnet.mirrornode.hedera.com/api/v1/", "topics", query)
+	messagesQuery := fmt.Sprintf("%s%s%s", "https://testnet.mirrornode.hedera.com/api/v1/", "transactions", query)
 	r, e := c.http.Get(messagesQuery)
 	if e != nil {
 		return nil, e
@@ -197,7 +196,7 @@ func (c *HCSClient) beginWatching(receiver common.MessageReceiver, currentTimeSt
 
 			response, err := c.getTransaction(msg.ConsensusTimestamp)
 			if err != nil {
-				// handle error
+				// TODO:
 			}
 			var txID string
 			for _, t := range response.Transactions {
