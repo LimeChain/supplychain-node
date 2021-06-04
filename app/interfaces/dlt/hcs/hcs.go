@@ -3,6 +3,7 @@ package hcs
 import (
 	"context"
 	"crypto/ed25519"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -215,8 +216,13 @@ func (c *HCSClient) beginWatching(receiver common.MessageReceiver, currentTimeSt
 				TransactionIdKey:  txId,
 			}}
 
+			contents, err := base64.StdEncoding.DecodeString(msg.Contents)
+			if err != nil {
+				// TODO:
+			}
+
 			ctx := context.WithValue(context.Background(), DLTValuesKey, dltContextValues)
-			receiver.Receive(&common.Message{Msg: []byte(msg.Contents), Ctx: ctx})
+			receiver.Receive(&common.Message{Msg: contents, Ctx: ctx})
 		}
 		time.Sleep(5 * time.Second)
 	}
