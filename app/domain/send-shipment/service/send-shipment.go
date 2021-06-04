@@ -36,9 +36,6 @@ func (ss *SendShipmentService) HashDataAndSignatures(unsignedSendShipment *model
 	sb.WriteRune(',')
 	sb.WriteString(sellerSignature)
 
-	fmt.Println("UDRIIIIII")
-	fmt.Println(sb.String())
-
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(sb.String())))
 }
 
