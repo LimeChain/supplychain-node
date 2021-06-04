@@ -25,7 +25,7 @@ type NodeJsDltRequest struct {
 	ShipmentId     int    `json:"shipmentId"`
 	ShipmentStatus int    `json:"shipmentStatus"`
 	Dlt            string `json:"dlt"`
-	Hash            string `json:"hash"`
+	Hash           string `json:"hash"`
 }
 
 type NodeJsRequestWrapper struct {

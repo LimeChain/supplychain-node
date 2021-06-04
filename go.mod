@@ -10,7 +10,7 @@ require (
 	github.com/golang/gddo v0.0.0-20200611223618-a4829ef13274 // indirect
 	github.com/google/martian v2.1.0+incompatible
 	github.com/google/uuid v1.1.2
-	github.com/hashgraph/hedera-sdk-go/v2 v2.1.4
+	github.com/hashgraph/hedera-sdk-go/v2 v2.1.5
 	github.com/joho/godotenv v1.3.0
 	github.com/libp2p/go-libp2p v0.10.0
 	github.com/libp2p/go-libp2p-core v0.6.0
