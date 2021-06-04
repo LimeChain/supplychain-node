@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"os"
 
 	"github.com/Limechain/pwc-bat-node/app/business/messages"
 	"github.com/Limechain/pwc-bat-node/app/domain/send-shipment/repository"
@@ -66,32 +69,32 @@ func (h *DLTSendShipmentHandler) Handle(msg *common.Message) error {
 		return err
 	}
 
-	// // values := map[string]string{"ac": "c", "pl": {"shipmentId": savedSendShipment.Obj.ShipmentModel.ShipmentId, "dlt": savedSendShipment.DLTTransactionId}}
-	// nodeJsRequest := NodeJsDltRequest{
-	// 	ShipmentId:     savedSendShipment.Obj.ShipmentModel.ShipmentId,
-	// 	ShipmentStatus: savedSendShipment.Obj.ShipmentModel.ShipmentStatus,
-	// 	Dlt:            savedSendShipment.DLTTransactionId,
-	// 	Hash:           savedSendShipment.SignedDataHash,
-	// }
-	// nodeJsRequestString, err := json.Marshal(nodeJsRequest)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	// values := map[string]string{"ac": "c", "pl": {"shipmentId": savedSendShipment.Obj.ShipmentModel.ShipmentId, "dlt": savedSendShipment.DLTTransactionId}}
+	nodeJsRequest := NodeJsDltRequest{
+		ShipmentId:     savedSendShipment.Obj.ShipmentModel.ShipmentId,
+		ShipmentStatus: savedSendShipment.Obj.ShipmentModel.ShipmentStatus,
+		Dlt:            savedSendShipment.DLTTransactionId,
+		Hash:           savedSendShipment.SignedDataHash,
+	}
+	nodeJsRequestString, err := json.Marshal(nodeJsRequest)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// values := NodeJsRequestWrapper{
-	// 	Ac: "c",
-	// 	Pl: string(nodeJsRequestString),
-	// }
-	// json_data, err := json.Marshal(values)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	values := NodeJsRequestWrapper{
+		Ac: "c",
+		Pl: string(nodeJsRequestString),
+	}
+	json_data, err := json.Marshal(values)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// _, err = http.Post(os.Getenv("NODEJS_SERVER"), "application/json", bytes.NewBuffer(json_data))
-	// if err != nil {
-	// 	log.Println("Error:")
-	// 	log.Fatal(err)
-	// }
+	_, err = http.Post(os.Getenv("NODEJS_SERVER"), "application/json", bytes.NewBuffer(json_data))
+	if err != nil {
+		log.Println("Error:")
+		log.Fatal(err)
+	}
 
 	log.Infof("Sent shipment with Id: %d seen in the dlt and verified\n", savedSendShipment.Obj.ShipmentModel.ShipmentId)
 	return nil
