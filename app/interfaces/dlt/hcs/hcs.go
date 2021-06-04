@@ -205,6 +205,7 @@ func (c *HCSClient) beginWatching(receiver common.MessageReceiver, currentTimeSt
 
 			txId := prepareTxId(fmt.Sprintf("%v", txID))
 			sequenceNumber := strconv.FormatUint(uint64(msg.SequenceNumber), 10)
+			currentTimeStamp = msg.ConsensusTimestamp
 
 			log.Infof("[HCS] The topic response received - TransactionID: %s\n", txId)
 			log.Infof("[HCS] The topic response received - SequenceNumber ID: %s\n", sequenceNumber)
