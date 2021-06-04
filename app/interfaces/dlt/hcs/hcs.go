@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -44,6 +45,49 @@ type (
 	}
 )
 
+type (
+	// Transaction struct used by the Hedera Mirror node REST API
+	Transaction struct {
+		ConsensusTimestamp   string     `json:"consensus_timestamp"`
+		EntityId             string     `json:"entity_id"`
+		TransactionHash      string     `json:"transaction_hash"`
+		ValidStartTimestamp  string     `json:"valid_start_timestamp"`
+		ChargedTxFee         int        `json:"charged_tx_fee"`
+		MemoBase64           string     `json:"memo_base64"`
+		Result               string     `json:"result"`
+		Name                 string     `json:"name"`
+		MaxFee               string     `json:"max_fee"`
+		ValidDurationSeconds string     `json:"valid_duration_seconds"`
+		Node                 string     `json:"node"`
+		Scheduled            bool       `json:"scheduled"`
+		TransactionID        string     `json:"transaction_id"`
+		Transfers            []Transfer `json:"transfers"`
+		TokenTransfers       []Transfer `json:"token_transfers"`
+	}
+	// Transfer struct used by the Hedera Mirror node REST API
+	Transfer struct {
+		Account string `json:"account"`
+		Amount  int64  `json:"amount"`
+		// When retrieving ordinary hbar transfers, this field does not get populated
+		Token string `json:"token_id"`
+	}
+	// Response struct used by the Hedera Mirror node REST API and returned once
+	// account transactions are queried
+	Response struct {
+		Transactions []Transaction
+		Status       `json:"_status"`
+	}
+)
+
+type (
+	ErrorMessage struct {
+		Message string `json:"message"`
+	}
+	Status struct {
+		Messages []ErrorMessage
+	}
+)
+
 type HCSClient struct {
 	client  *hedera.Client
 	topicID hedera.TopicID
@@ -73,31 +117,8 @@ func (c *HCSClient) Send(msg *common.Message) error {
 
 func (c *HCSClient) Listen(receiver common.MessageReceiver) error {
 	initialTimeStamp := time.Now()
-	_, err := hedera.NewTopicMessageQuery().
-		SetTopicID(c.topicID).
-		Subscribe(
-			c.client,
-			func(resp hedera.TopicMessage) {
-				log.Infof("[HCS] The topic response received %s\n", resp)
+	go c.beginWatching(receiver, string(initialTimeStamp.Second()))
 
-				txId := prepareTxId(fmt.Sprintf("%v", resp.TransactionID))
-				sequenceNumber := strconv.FormatUint(resp.SequenceNumber, 10)
-
-				log.Infof("[HCS] The topic response received - TransactionID: %s\n", txId)
-				log.Infof("[HCS] The topic response received - SequenceNumber ID: %s\n", sequenceNumber)
-
-				dltContextValues := DLTValues{map[string]string{
-					SequenceNumberKey: sequenceNumber,
-					TransactionIdKey:  txId,
-				}}
-
-				ctx := context.WithValue(context.Background(), DLTValuesKey, dltContextValues)
-				receiver.Receive(&common.Message{Msg: resp.Contents, Ctx: ctx})
-			})
-
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -132,22 +153,59 @@ func (c *HCSClient) getMessagesAfterTimestamp(initialTimeStamp string) ([]Messag
 	return messages.Messages, nil
 }
 
-func (c *HCSClient) beginWatching(currentTimeStamp string) {
+func (c *HCSClient) getTransaction(timestamp string) (*Response, error) {
+	query := fmt.Sprintf("/%s/transactions?timestamp=gt:%s",
+		c.topicID.String(),
+		timestamp)
+
+	messagesQuery := fmt.Sprintf("%s%s%s", "https://testnet.mirrornode.hedera.com/api/v1/", "topics", query)
+	r, e := c.http.Get(messagesQuery)
+	if e != nil {
+		return nil, e
+	}
+
+	bodyBytes, e := readResponseBody(r)
+	if e != nil {
+		return nil, e
+	}
+
+	var response *Response
+	e = json.Unmarshal(bodyBytes, &response)
+	if e != nil {
+		return nil, e
+	}
+	if r.StatusCode >= 400 {
+		return response, errors.New(fmt.Sprintf(`Failed to execute query: [%s]. Error: [%s]`, query, response.Status))
+	}
+
+	return response, nil
+}
+
+func (c *HCSClient) beginWatching(receiver common.MessageReceiver, currentTimeStamp string) {
 	for {
-		messages, err := c.getMessagesAfterTimestamp(string(currentTimeStamp))
+		messages, err := c.getMessagesAfterTimestamp(currentTimeStamp)
 		if err != nil {
 			log.Infof("Error while retrieving messages from mirror node. Error [%s]", err)
-			go c.beginWatching()
+			go c.beginWatching(receiver, currentTimeStamp)
 			return
 		}
 
 		log.Infof("Polling found [%d] Messages", len(messages))
 
 		for _, msg := range messages {
-			log.Infof("[HCS] The topic response received %s\n", resp)
+			log.Infof("[HCS] The topic response received %s\n", msg)
 
-			txId := prepareTxId(fmt.Sprintf("%v", resp.TransactionID))
-			sequenceNumber := strconv.FormatUint(resp.SequenceNumber, 10)
+			response, err := c.getTransaction(msg.ConsensusTimestamp)
+			if err != nil {
+				// handle error
+			}
+			var txID string
+			for _, t := range response.Transactions {
+				txID = t.TransactionID
+			}
+
+			txId := prepareTxId(fmt.Sprintf("%v", txID))
+			sequenceNumber := strconv.FormatUint(uint64(msg.SequenceNumber), 10)
 
 			log.Infof("[HCS] The topic response received - TransactionID: %s\n", txId)
 			log.Infof("[HCS] The topic response received - SequenceNumber ID: %s\n", sequenceNumber)
@@ -158,9 +216,9 @@ func (c *HCSClient) beginWatching(currentTimeStamp string) {
 			}}
 
 			ctx := context.WithValue(context.Background(), DLTValuesKey, dltContextValues)
-			receiver.Receive(&common.Message{Msg: resp.Contents, Ctx: ctx})
+			receiver.Receive(&common.Message{Msg: []byte(msg.Contents), Ctx: ctx})
 		}
-		time.Sleep(cmw.pollingInterval * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }
 
