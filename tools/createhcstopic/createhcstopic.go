@@ -8,7 +8,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-func createHCSTopic(a, b hedera.PublicKey) hedera.TopicID {
+func createHCSTopic() hedera.TopicID {
 	shouldConnectToMainnet := (os.Getenv("HCS_MAINNET") == "true")
 
 	operatorAccountID, err := hedera.AccountIDFromString(os.Getenv("HCS_OPERATOR_ID"))
@@ -34,8 +34,6 @@ func createHCSTopic(a, b hedera.PublicKey) hedera.TopicID {
 	transactionID, err := hedera.NewTopicCreateTransaction().
 		SetAdminKey(operatorPrivateKey.PublicKey()).
 		SetAutoRenewAccountID(operatorAccountID).
-		SetSubmitKey(a).
-		SetSubmitKey(b).
 		Execute(client)
 
 	if err != nil {
@@ -56,20 +54,7 @@ func createHCSTopic(a, b hedera.PublicKey) hedera.TopicID {
 
 func main() {
 
-	a := os.Getenv("A_PUB_KEY")
-	b := os.Getenv("B_PUB_KEY")
-
-	aPubKey, err := hedera.PublicKeyFromString(a)
-	if err != nil {
-		panic(err)
-	}
-
-	bPubKey, err := hedera.PublicKeyFromString(b)
-	if err != nil {
-		panic(err)
-	}
-
-	topicID := createHCSTopic(aPubKey, bPubKey)
+	topicID := createHCSTopic()
 
 	fmt.Printf("topicID: %v\n", topicID)
 
