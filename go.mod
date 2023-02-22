@@ -12,8 +12,8 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/hashgraph/hedera-sdk-go/v2 v2.1.5
 	github.com/joho/godotenv v1.3.0
-	github.com/libp2p/go-libp2p v0.10.0
-	github.com/libp2p/go-libp2p-core v0.6.0
+	github.com/libp2p/go-libp2p v0.10.3
+	github.com/libp2p/go-libp2p-core v0.6.1
 	github.com/libp2p/go-libp2p-peerstore v0.2.6
 	github.com/multiformats/go-multiaddr v0.2.2
 	github.com/sirupsen/logrus v1.4.2
